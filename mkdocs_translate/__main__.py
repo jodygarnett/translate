@@ -1,7 +1,7 @@
 """To-Do entry point script."""
 # message/__main__.py
 
-from translate import cli, __app_name__
+from mkdocs_translate import cli, __app_name__
 
 def main():
     cli.app(prog_name=__app_name__)

@@ -9,7 +9,7 @@ import requests
 import subprocess
 import yaml
 
-from translate import __app_name__, __version__
+from mkdocs_translate import __app_name__, __version__
 
 logger = logging.getLogger(__app_name__)
 
@@ -53,7 +53,7 @@ def load_config(override_path: str) -> dict:
             return yaml.safe_load(text)
     else:
         # default configuration
-        raw = pkgutil.get_data('translate', "config.yml")
+        raw = pkgutil.get_data('mkdocs_translate', "config.yml")
         return yaml.safe_load(raw.decode('utf-8'))
 
 def init_config(override_path: str) -> None:
@@ -82,10 +82,12 @@ def init_config(override_path: str) -> None:
         rst_folder = config['rst_folder']
 
     if not os.path.exists(docs_folder):
-       raise FileNotFoundError(errno.ENOENT, f"The docs folder does not exist at location:", docs_folder)
+       logger.debug(f"The docs folder does not exist at location: {docs_folder}")
+       #raise FileNotFoundError(errno.ENOENT, f"The docs folder does not exist at location:", docs_folder)
 
     if not os.path.exists(rst_folder):
-       raise FileNotFoundError(errno.ENOENT, f"The rst folder does not exist at location:", rst_folder)
+       logger.debug(f"The rst folder does not exist at location: {rst_folder}")
+       #raise FileNotFoundError(errno.ENOENT, f"The rst folder does not exist at location:", rst_folder)
 
     logger.debug('--- start configuration ---')
     logger.debug('  mkdocs: %s',docs_folder)

@@ -1,8 +1,8 @@
 """Top-level package for translate script."""
 # message/__init__.py
 
-__app_name__ = "translate"
-__version__ = "0.1.0"
+__app_name__ = "mkdocs_translate"
+__version__ = "0.2.0"
 
 (
     SUCCESS,

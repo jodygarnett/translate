@@ -33,6 +33,9 @@ venv
 **/__pycache__
 # Sphinx-build
 *.mo
+*.egg-info/
+dist/
+build/
 
 # sphinx-build and mkdocs
 */conf.py

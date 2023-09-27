@@ -17,8 +17,8 @@ from typing import List
 from typing_extensions import Annotated
 
 
-import translate.translate
-from translate import __app_name__, __version__
+import mkdocs_translate.translate
+from mkdocs_translate import __app_name__, __version__
 from .translate import rst_folder
 from .translate import anchor_file
 from .translate import init_config
@@ -93,7 +93,7 @@ def index(
     """
     Scan rst files collecting doc and ref targets updating anchors.txt index.
     """
-    rst_path = translate.translate.rst_folder
+    rst_path = mkdocs_translate.translate.rst_folder
 
     if test:
         index = index_rst(rst_path,test)
@@ -101,7 +101,7 @@ def index(
         return
 
     rst_glob = rst_path+"/**/*.rst"
-    anchor_path = translate.translate.anchor_file
+    anchor_path = mkdocs_translate.translate.anchor_file
 
     collected = collect_path(rst_glob,'rst')
     collected.sort()
@@ -121,7 +121,7 @@ def index(
 
 @app.command()
 def rst(
-        rst_path: Annotated[List[str], typer.Argument(help="path to rst file(s)")] = translate.translate.rst_folder,
+        rst_path: Annotated[List[str], typer.Argument(help="path to rst file(s)")] = mkdocs_translate.translate.rst_folder,
     ):
     """
     Convert rst files to markdown using pandoc.
@@ -135,7 +135,7 @@ def rst(
     init_anchors()
 
     if not rst_path:
-       rst_glob = translate.translate.rst_folder+"/**/*.rst"
+       rst_glob = mkdocs_translate.translate.rst_folder+"/**/*.rst"
        rst_path = [rst_glob]
 
     for rst_file in collect_paths(rst_path,'rst'):
