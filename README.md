@@ -11,7 +11,7 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 2. Install script requirements, and check it runs:
 
    ```
-   python3 -m mkdocs_translate
+   mkdocs_translate --help
    ```
 
 3. The script is runs from the location of your mkdocs project (with `docs` and `mkdocs.yml` files):
@@ -62,14 +62,14 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 
    ```
    cd core-geonetwork/docs/manual
-   python3 -m mkdocs_translate index
+   mkdocs_translate index
    ```
 
 4. To bulk convert all content from ``rst`` to ``md``:
    
    ```
    cd core-geonetwork/docs/manual
-   python3 -m mkdocs_translate rst docs/contributing/doing-a-release.rst
+   mkdocs_translate rst docs/contributing/doing-a-release.rst
    ```
    
 5. Review this content you may find individual files to fix.
@@ -86,14 +86,14 @@ A translate script is provided to facilitate working with pandoc and deepl trans
    
    ```
    cd core-geonetwork/docs/manual
-   python3 -m mkdocs_translate rst docs/contributing/doing-a-release.rst
+   mkdocs_translate rst docs/contributing/doing-a-release.rst
    ```
 
 7. Bulk convert files in a folder:
    
    ```
    cd core-geonetwork/docs/manual
-   python3 -m mkdocs_translate rst docs/introduction/**/*.rst
+   mkdocs_translate rst docs/introduction/**/*.rst
    ```
 
 8. To copy any edited `rst` files back to the origional rst folder:
@@ -128,18 +128,18 @@ Using ***pandoc*** to convert to `html`, and then using the [Deepl REST API](htt
 5. Translate a document to french using pandoc and deepl:
 
    ```
-   python3 -m mkdocs_translate french docs/help/index.md
+   mkdocs_translate french docs/help/index.md
    ```
    
 6. To translate several documents in a folder:
 
    ```
-   python3 -m mkdocs_translate french docs/overview/*.md
+   mkdocs_translate french docs/overview/*.md
    ```
    
    Deepl charges by the character so bulk translation not advisable.
 
-See ``python3 -m mkdocs_translate french --help`` for more options.
+See ``mkdocs_translate french --help`` for more options.
 
 You are welcome to use  google translate, ChatGPT, or Deepl directly - keeping in mind markdown formatting may be lost.
 
@@ -166,9 +166,15 @@ Please see the writing guide for what mkdocs functionality is supported.
 
 ## Configuration
 
-For core-geonetwork no configuration is required.
+For core-geonetwork (or other projects following maven conventions) no configuration is required.
 
-The file `mkdocs_translate/config.yml` file contains some settings
+To override configuration on command line add `-concfig <file.yml>` before the command:
+
+```bash
+mkdocs_translate --config translate.yml rst
+```
+
+The file `mkdocs_translate/config.yml` file contains some settings (defaults are shown below):
 
 * `deepl_base_url`: "https://api-free.deepl.com"
       
