@@ -826,7 +826,6 @@ def convert_markdown(md_file: str) -> str:
     if not os.path.exists(md_file):
        raise FileNotFoundError(errno.ENOENT, f"Markdown file does not exist at location:", md_file)
 
-    config = load_config()
     if not md_file[-3:] == '.md':
        raise FileNotFoundError(errno.ENOENT, f"Markdown 'md' extension required:", md_file)
 
@@ -1087,7 +1086,6 @@ def deepl_document(en_html:str, fr_html:str):
     if not os.path.exists(en_html):
        raise FileNotFoundError(errno.ENOENT, f"HTML file does not exist at location:", en_html)
 
-    config = load_config()
     AUTH = load_auth()
 
     # prep html file for conversion
@@ -1145,57 +1143,3 @@ def preprocess_translate(html_file: str, html_clean: str):
     )
     with open(html_clean,'w') as html:
         html.write(data)
-
-# def deepl_translate(html_file: str) -> dict:
-#     """
-#     Submit html_file to deepl for translation.
-#     :param html_file: HTML file path
-#     :return: json response from deepl api
-#     """
-#     if not os.path.exists(html_file):
-#        raise FileNotFoundError(errno.ENOENT, f"HTML file does not exist at location:", html_file)
-#
-#     config = load_config()
-#     AUTH = load_auth()
-#
-#     translator = deepl.Translator(AUTH)
-#
-#     response = requests.post(
-#        config['deepl_base_url']+'/v2/document',
-#        data={
-#           'source_lang':'EN',
-#           'target_lang':'FR',
-#           'tag_handling':'xml',
-#           'formality':'prefer_more',
-#           'ignore_tags':'code',
-#        },
-#        files={
-#           'file': open(html_file,'rt')
-#        },
-#        headers={
-#           'Authorization': f"DeepL-Auth-Key {AUTH}"}
-#     )
-#     status = response.json()
-#     return status
-#
-# def deepl_status(document_id: str, document_key: str) -> dict:
-#     """
-#     Submit document_id to deepl for translation.
-#     :param document_id: ID provided from document upload
-#     :param document_key: Encryption key provided from document uploaded
-#     :return: json status from deepl api
-#     """
-#     config = load_config()
-#     AUTH = load_auth()
-#
-#     response = requests.post(
-#        config['deepl_base_url']+'/v2/document/'+document_id,
-#        data={'document_key':document_key,},
-#        headers={
-#           'Authorization': f"DeepL-Auth-Key {AUTH}",
-#           'Content-Type': 'application/json'},
-#     )
-#     status = response.json()
-#     return status
-
-
