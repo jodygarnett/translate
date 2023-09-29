@@ -112,7 +112,7 @@ def load_anchors(anchor_txt:str) -> dict[str,str]:
     with open(anchor_txt,'r') as file:
        for line in file:
          if '=' in line:
-            (anchor,path) = line.split('=')
+            (anchor,path) = line.split('=',1)
             index[anchor] = path[0:-1]
 
     return index
@@ -236,6 +236,7 @@ def scan_heading(index: int, lines: list[str] ) -> str:
     h6 = '"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""'
     h7 = "`````````````````````````````````````````````````````````````````````````````````````````````````````````````"
     h8 = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    h9 = "'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''"
     if index >= len(lines)-1:
        return None # last line cannot be a heading
 
@@ -254,7 +255,8 @@ def scan_heading(index: int, lines: list[str] ) -> str:
        under == h5[0:under_length] or \
        under == h6[0:under_length] or \
        under == h7[0:under_length] or \
-       under == h8[0:under_length]:
+       under == h8[0:under_length] or \
+       under == h9[0:under_length]:
 
        return line
 
@@ -347,12 +349,12 @@ def _ref_path(rst_path: str, reference: str) ->  str:
     if ref_location.startswith("/"):
         ref_location = ref_location[1:]
 
-    logging.debug("--: "+rst_location)
-    logging.debug("--> "+ref_location)
+    logging.debug("   reference: "+rst_location)
+    logging.debug("    absolute: "+ref_location)
 
     link = os.path.relpath(ref_location,rst_location)
 
-    logging.debug("--> "+link)
+    logging.debug("    relative: "+link)
     return link
 
 
@@ -391,7 +393,7 @@ def convert_rst(rst_file: str) -> str:
     logging.debug("Preprocessing '"+rst_file+"' to '"+rst_prep+"'")
     preprocess_rst(rst_file,rst_prep)
 
-    logging.debug("Converting '"+rst_prep+"' to '"+md_file+"'")
+    logging.debug("Converting '"+rst_prep+"' to '"+md_tmp_file+"'")
 
     completed = subprocess.run(["pandoc",
 #      "--verbose",
@@ -408,6 +410,7 @@ def convert_rst(rst_file: str) -> str:
     if not os.path.exists(md_tmp_file):
        raise FileNotFoundError(errno.ENOENT, f"Pandoc did not create md file:", md_tmp_file)
 
+    logging.debug("Preprocessing '"+md_tmp_file+"' to '"+md_file+"'")
     postprocess_rst_markdown(md_tmp_file, md_file)
     if not os.path.exists(md_file):
       raise FileNotFoundError(errno.ENOENT, f"Did not create postprocessed md file:", md_file)
@@ -431,6 +434,15 @@ def preprocess_rst(rst_file:str, rst_prep: str) -> str:
     if ':ref:' in text:
         text = _preprocess_rst_ref(rst_file,text)
 
+    if '.. figure::' in text:
+        text = _preprocess_rst_figure(rst_file,text)
+    
+    # strip unsupported things
+    if '.. index::' in text:
+        text = _preprocess_rst_strip(rst_file,text,'index')
+    if '.. contents::' in text:
+        text = _preprocess_rst_strip(rst_file,text,'contents')
+    
     # gui-label and menuselection represented: **Cancel**
     text = re.sub(
         r":guilabel:`(.*)`",
@@ -558,7 +570,7 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
        if toctree != None:
           if len(line.strip()) == 0:
              continue
-          if line[0:4] == '   :':
+          if line.strip()[0:1] == ':':
              continue
           if line[0:3] == '   ':
              # processing directive
@@ -579,6 +591,140 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
 
    return process
 
+def _preprocess_rst_figure(path: str, text: str) -> str:
+   """
+   scan document for figure directive
+   """
+   block = None
+   
+   indent = None  # indent while capturing
+   arguments = None # arguments while capturing
+   content = None # content while capturing
+   figure = None  # simplified
+   
+   # processed text
+   process = ''
+   logging.debug("preprocessing figure: "+path)
+   for line in text.splitlines():
+       # logging.debug('processing:'+line)
+       blank = len(line.strip()) == 0
+       if block == None:
+          match = re.search(r"^(\s*)\.\. figure::\s*((\w|-|\.)*)$", line)
+          if match:
+             # figure directive started
+             block = line + '\n'
+             indent = match.group(1)
+             image = match.group(2)
+             
+             content = None
+             arguments = {}
+             figure = indent + '.. image:: '+image+'\n'
+             
+             logging.debug("    figure: " + image)
+             continue
+          else:
+             # logging.debug('      scan:'+line)
+             process += line + '\n'
+             continue
+       else:
+          indented = len(line) - len(line.lstrip())
+          if blank and content == None:
+             logging.debug('     blank:'+line)
+             # capture content next
+             block += line + '\n'
+             content = ''
+             continue
+          elif line.strip()[indented:1] == ':' and content == None:
+             logging.debug('   process:'+line)
+             # capture arguments
+             block += line + '\n'
+             (ignore,option,value) = line.split(':',2)
+             logging.debug("      "+option+'='+value)
+             arguments[option] = value
+             continue
+          elif indented > len(indent):
+             # directive content
+             block += line + '\n'
+             
+             if content == '':
+                 logging.debug('   caption:'+line)
+                 caption = line.strip()
+                 print(caption, caption[0], caption[-1])
+                 if caption[0] == '*' and caption[-1] == '*':
+                     content = indent + caption
+                 else:
+                     content = indent + '*'+caption+'*'
+             else:
+                 logging.debug('   legend:'+line)
+                 content += '\n'+indent+line.strip()
+             # figure += indent + line.strip() + '\n'
+             continue
+          else:
+             logging.debug('      done:'+line)
+             # end directive
+             if arguments:
+                 logging.debug('      arguments:'+str(arguments))
+             if content:
+                 logging.debug('      content:'+content)
+             
+             logging.debug("rst figure:\n"+block)
+             logging.debug("rst image:\n"+figure)
+             process += figure
+             if content:
+                 process += content + '\n'
+
+             process += '\n' + line + '\n'
+             block = None
+             figure = None
+             indent = None
+             arguments = None
+             content = None
+             continue
+
+   if block != None:
+      # end directive at end of file
+      logging.debug("rst figure:\n"+block)
+      logging.debug("markdown image:]m"+figure)
+      process += figure + '\n'
+
+   return process
+
+def _preprocess_rst_strip(path: str, text: str, directive: str) -> str:
+   """
+   scan document and strip indicated block directive
+   """
+   block = None
+   process = ''
+   for line in text.splitlines():
+       if '.. '+directive+'::' in line:
+          # directive started
+          block = line
+          continue
+
+       if block != None:
+          if len(line.strip()) == 0:
+             block += line
+             continue
+          if line.strip()[0:1] == ':':
+             block += line
+             continue
+          if line[0:3] == '   ':
+             # processing directive
+             block += line
+          else:
+             # end directive
+             logging.debug("strip "+directive+":"+block)
+             process += '\n' + line + '\n'
+             block = None
+       else:
+          process += line + '\n'
+
+   if block != None:
+      # end directive at end of file
+      logging.debug("strip "+directive+":"+block)
+   
+   return process
+
 def postprocess_rst_markdown(md_file: str, md_clean: str):
     """
     Postprocess pandoc generated markdown for mkdocs use.
@@ -589,7 +735,7 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
 
     # process pandoc ::: adominitions to mkdocs representation
     if ':::' in text:
-        text = _postprocess_pandoc_fenced_divs(text)
+        text = _postprocess_pandoc_fenced_divs(md_file, text)
 
 
     if "{.title-ref}" in text:
@@ -655,7 +801,7 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     with open(md_clean,'w') as markdown:
         markdown.write(clean)
 
-def _postprocess_pandoc_fenced_divs(text: str) -> str:
+def _postprocess_pandoc_fenced_divs(md_file:str, text: str) -> str:
    # scan document for pandoc fenced div info, warnings, ...
    admonition = False
    type = None
@@ -794,7 +940,7 @@ def _postprocess_pandoc_fenced_divs(text: str) -> str:
           print("  process",len(process))
           print()
           print(process)
-          raise ValueError('unclear what to process '+str(type)+" "+str(title))
+          raise ValueError('unclear what to process '+str(type)+" "+str(title)+"\n"+md_file)
 
        else:
           process += line + '\n'
@@ -806,7 +952,7 @@ def _postprocess_pandoc_fenced_divs(text: str) -> str:
       print("  type",type)
       print("  title",title)
       print("  note",note)
-      raise ValueError('Expected ::: to end fence dive '+str(type)+' '+str(title)+' '+str(note))
+      raise ValueError('Expected ::: to end fence dive '+str(type)+' '+str(title)+' '+str(note)+"\n"+md_file)
 
    return process
 

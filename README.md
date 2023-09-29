@@ -147,6 +147,8 @@ Please see the writing guide for what mkdocs functionality is supported.
 
 ## Local Development
 
+To build and test locally:
+
 1. Clone:
 
    ```
@@ -161,8 +163,57 @@ Please see the writing guide for what mkdocs functionality is supported.
 
 2. Install locally:
    ```
-   pip3 install -e .  
+   pip3 install -e .
    ```
+
+Debugging:
+
+1. Recommend troubleshooting a single file at a time:
+
+   ```rst
+   mkdocs_translate rst docs/index.rst
+   ```
+   
+2. Compare the temporary files staged for pandoc conversion:
+
+   ```
+   bbedit docs/index.rst docs/index.md target/convert/index.tmp.html target/convert/index/tmp.md
+   ```
+   
+3. To turn on logging during conversion:
+
+   ```bash
+   mkdocs_translate --log=DEBUG translate.yml rst
+   ```
+
+Pandoc:
+
+1. The pandoc plugin settings are in two constants:
+
+   ```python 
+    md_extensions_to =
+        'markdown+definition_lists+fenced_divs+backtick_code_blocks+fenced_code_attributes-simple_tables+pipe_tables'
+    md_extensions_from =
+        'markdown+definition_lists+fenced_divs+backtick_code_blocks+fenced_code_attributes+pipe_tables'
+   ```
+
+2. The pandoc extensions are chosen to align with mkdocs use of markdown extensions, or with post-processing:
+
+   | markdown extension   | pandoc extension       | post processing |
+   |----------------------|------------------------|-----------------|
+   | tables               | pipe_tables            |                 |
+   | pymdownx.keys        |                        | post processing |
+   | pymdownx.superfences | backtick_code_blocks   | post processing | 
+   | admonition           | fenced_divs            | post processing |
+   
+3. To troubleshoot just the markdown to html conversion:
+   
+   ```bash
+   mkdocs_translate internal_html manual/docs/contributing/style-guide.md
+   mkdocs_translate internal_markdown target/contributing/style-guide.html
+
+   diff manual/docs/contributing/style-guide.md target/contributing/style-guide.md
+   ``` 
 
 ## Configuration
 
@@ -207,4 +258,3 @@ The file `mkdocs_translate/config.yml` file contains some settings (defaults are
    
    Combined with ``build_folder`` to retrieve translation results (example:  `build/translate`)
    Temporary files are required for use by pandoc.
-
