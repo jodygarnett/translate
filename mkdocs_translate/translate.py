@@ -32,19 +32,50 @@ md_extensions_from = 'markdown+definition_lists+fenced_divs+backtick_code_blocks
 # CLI SUPPORT AND CONFIGURATION
 #
 def load_auth() -> str:
-    """
-    Look up DEEPL_AUTH environmental variable for authentication.
-    """
-    AUTH = os.getenv('DEEPL_AUTH')
-    if not AUTH:
-       raise ValueError('Environmental variable DEEPL_AUTH required for translate with Deepl REST API')
+   """
+    Load the authentication token for Deepl REST API.
 
-    return AUTH
+    This function retrieves the Deepl authentication token from the
+    environmental variable 'DEEPL_AUTH'. If the variable is not set,
+    a ValueError is raised.
+
+    Returns:
+    str: The Deepl authentication token.
+
+    Raises:
+    ValueError: If the 'DEEPL_AUTH' environmental variable is not set.
+   """
+   AUTH = os.getenv('DEEPL_AUTH')
+   if not AUTH:
+      raise ValueError('Environmental variable DEEPL_AUTH required for translate with Deepl REST API')
+
+   return AUTH
 
 def load_config(override_path: str) -> dict:
     """
-    Load config.yml application configuration.
-    :param override_path: Overide config location, or None to use built-in default configuration
+    Load the configuration settings.
+
+    This function reads the configuration settings either from the specified
+    override file or, if no override file is provided, from the default
+    configuration file included with the 'mkdocs_translate' package.
+
+    Parameters:
+    - override_path (str): The path to the override configuration file. If
+      provided, the function reads configuration settings from this file.
+
+    Returns:
+    dict: A dictionary containing the configuration settings.
+
+    Notes:
+    - If 'override_path' is provided, the function reads and returns the
+      configuration from the specified file.
+    - If 'override_path' is not provided, the function reads and returns the
+      default configuration from the 'config.yml' file included with the
+      'mkdocs_translate' package.
+
+    Raises:
+    FileNotFoundError: If 'override_path' is provided, but the file does not exist.
+    yaml.YAMLError: If there is an issue parsing the YAML content.
     """
     if override_path:
         # override configuration
@@ -56,66 +87,106 @@ def load_config(override_path: str) -> dict:
         raw = pkgutil.get_data('mkdocs_translate', "config.yml")
         return yaml.safe_load(raw.decode('utf-8'))
 
+
 def init_config(override_path: str) -> None:
-    """
-    Initialize using provided config
-    :param override_path: Overide config location, or None to use built-in default configuration
-    """
-    global config
-    global docs_folder
-    global upload_folder
-    global convert_folder
-    global download_folder
-    global rst_folder
-    global anchor_file
+   """
+    Initialize configuration settings.
 
-    config = load_config(override_path)
+    This function initializes global variables related to the configuration
+    settings. It loads the configuration using the provided override file
+    path or defaults to the configuration included with the 'mkdocs_translate'
+    package. It also constructs file paths based on the loaded configuration.
 
-    docs_folder = os.path.join(config['project_folder'],config['docs_folder'])
-    upload_folder = os.path.join(config['project_folder'],config['build_folder'],config['upload_folder'])
-    convert_folder = os.path.join(config['project_folder'],config['build_folder'],config['convert_folder'])
-    download_folder = os.path.join(config['project_folder'],config['build_folder'],config['download_folder'])
-    anchor_file = os.path.join(docs_folder,config['anchor_file'])
+    Parameters:
+    - override_path (str): The path to the override configuration file. If
+      provided, the function loads configuration settings from this file.
 
-    rst_folder = docs_folder
-    if 'rst_folder' in config:
-        rst_folder = config['rst_folder']
+    Returns:
+    None: This function does not return a value.
 
-    if not os.path.exists(docs_folder):
-       logger.debug(f"The docs folder does not exist at location: {docs_folder}")
-       #raise FileNotFoundError(errno.ENOENT, f"The docs folder does not exist at location:", docs_folder)
+    Notes:
+    - The global variables 'config', 'docs_folder', 'upload_folder',
+      'convert_folder', 'download_folder', 'rst_folder', and 'anchor_file'
+      are initialized and made accessible globally after calling this function.
 
-    if not os.path.exists(rst_folder):
-       logger.debug(f"The rst folder does not exist at location: {rst_folder}")
-       #raise FileNotFoundError(errno.ENOENT, f"The rst folder does not exist at location:", rst_folder)
+    - If 'override_path' is provided, the function loads the configuration
+      from the specified file. Otherwise, it loads the default configuration
+      from the 'config.yml' file included with the 'mkdocs_translate' package.
 
-    logger.debug('--- start configuration ---')
-    logger.debug('  mkdocs: %s',docs_folder)
-    logger.debug('  sphinx: %s',rst_folder)
-    logger.debug('  upload: %s',upload_folder)
-    logger.debug('download: %s',download_folder)
-    logger.debug('    docs: %s',docs_folder)
-    logger.debug(' anchors: %s',anchor_file)
-    logger.debug('--- end configuration ---')
-    return
+    - The file paths for 'docs_folder', 'upload_folder', 'convert_folder',
+      'download_folder', and 'anchor_file' are constructed based on the loaded
+      configuration.
+
+    - The function logs debug information, including the configured paths.
+
+   """
+   global config
+   global docs_folder
+   global upload_folder
+   global convert_folder
+   global download_folder
+   global rst_folder
+   global anchor_file
+
+   config = load_config(override_path)
+
+   docs_folder = os.path.join(config['project_folder'],config['docs_folder'])
+   upload_folder = os.path.join(config['project_folder'],config['build_folder'],config['upload_folder'])
+   convert_folder = os.path.join(config['project_folder'],config['build_folder'],config['convert_folder'])
+   download_folder = os.path.join(config['project_folder'],config['build_folder'],config['download_folder'])
+   anchor_file = os.path.join(docs_folder,config['anchor_file'])
+
+   rst_folder = docs_folder
+   if 'rst_folder' in config:
+      rst_folder = config['rst_folder']
+
+   if not os.path.exists(docs_folder):
+      logger.debug(f"The docs folder does not exist at location: {docs_folder}")
+      #raise FileNotFoundError(errno.ENOENT, f"The docs folder does not exist at location:", docs_folder)
+
+   if not os.path.exists(rst_folder):
+      logger.debug(f"The rst folder does not exist at location: {rst_folder}")
+      #raise FileNotFoundError(errno.ENOENT, f"The rst folder does not exist at location:", rst_folder)
+
+   logger.debug('--- start configuration ---')
+   logger.debug('  mkdocs: %s',docs_folder)
+   logger.debug('  sphinx: %s',rst_folder)
+   logger.debug('  upload: %s',upload_folder)
+   logger.debug('download: %s',download_folder)
+   logger.debug('    docs: %s',docs_folder)
+   logger.debug(' anchors: %s',anchor_file)
+   logger.debug('--- end configuration ---')
+   return
 
 def load_anchors(anchor_txt:str) -> dict[str,str]:
-    """
-    load anchors reference of the form:
-       reference=/absolut/path/to/file.md#anchor
-    """
-    if not os.path.exists(anchor_txt):
-       logger.warning("Anchors definition file not avaialble - to creae run: python3 -m translate index")
-       raise FileNotFoundError(errno.ENOENT, f"anchors definition file does not exist at location:", anchor_txt)
+   """
+    Load anchors from an anchor definition file.
 
-    index = {}
-    with open(anchor_txt,'r') as file:
-       for line in file:
+    This function reads an anchor definition file, where each line contains
+    an anchor and its corresponding path separated by '='. The anchors and paths
+    are then stored in a dictionary.
+
+    Parameters:
+    - anchor_txt (str): The path to the anchor definition file.
+
+    Returns:
+    dict[str, str]: A dictionary where keys are anchors and values are paths.
+
+    Raises:
+    FileNotFoundError: If the anchor definition file does not exist.
+   """
+   if not os.path.exists(anchor_txt):
+      logger.warning("Anchors definition file not avaialble - to creae run: python3 -m translate index")
+      raise FileNotFoundError(errno.ENOENT, f"anchors definition file does not exist at location:", anchor_txt)
+
+   index = {}
+   with open(anchor_txt,'r') as file:
+      for line in file:
          if '=' in line:
             (anchor,path) = line.split('=',1)
             index[anchor] = path[0:-1]
 
-    return index
+   return index
 
 def init_anchors():
     global anchors
@@ -123,10 +194,23 @@ def init_anchors():
     anchors = load_anchors(anchor_file)
     logging.debug("anchors loaded:"+str(len(anchors)))
 
+
 def collect_path(path: str, extension: str) -> list[str]:
     """
-    Collect all the files with an extension from a path.
+    Collect file paths based on a specified path and file extension.
+
+    This function collects file paths based on the given path and file extension.
+    If the provided path contains '*', it uses globbing to find matching files
+    recursively with the specified extension. If the path does not contain '*',
+    it checks if the file at the specified path has the specified extension.
     If the path is a single file the extension should match.
+
+    Parameters:
+    - path (str): The path or pattern to search for files.
+    - extension (str): The file extension to filter the collected files.
+
+    Returns:
+    list[str]: A list of file paths that match the specified criteria.
     """
     files = []
     if '*' in path:
@@ -140,80 +224,101 @@ def collect_path(path: str, extension: str) -> list[str]:
     return files
 
 def collect_paths(paths: list[str], extension: str) -> list[str]:
-    """
-    Collect all the files with an extension from a list of paths.
-    If the path is a single file the extension should match.
-    """
-    files = []
+   """
+   Collect files with a specified extension from a list of paths.
 
-    for path in paths:
-       files.extend( collect_path(path,extension) )
+   This function collects file paths based on a list of paths and a specified
+   file extension. For each path in the list, it uses the `collect_path` function
+   to gather files with the given extension.
 
-    return files
+   Parameters:
+   - paths (list[str]): A list of paths to search for files.
+   - extension (str): The file extension to filter the collected files.
+
+   Returns:
+   list[str]: A list of file paths that match the specified criteria.
+   See Also:
+    - `collect_path`: A function used to collect files based on a single path.
+   """
+   files = []
+
+   for path in paths:
+      files.extend( collect_path(path,extension) )
+
+   return files
 
 #
 # RST INDEX MANAGEMENT AND USE
 #
 def index_rst(base_path: str, rst_file: str) -> str:
-    """
-    Scan through rst_file producing doc and ref indexs
-    """
-    if not os.path.exists(base_path):
-       raise FileNotFoundError(errno.ENOENT, f"RST base_path does not exist at location: {base_path}")
+   """
+   Scan through rst_file producing doc and ref indexs
+   Parameters:
+   - base_path (str): The base path used for constructing relative paths.
+   - rst_file (str): The path to the RST file to be scanned.
 
-    common_path = os.path.commonpath([base_path,rst_file])
-    if common_path != base_path:
-       raise FileNotFoundError(errno.ENOENT, f"RST base_path '{base_path}' does not contain rst_file: '{rst_file}'")
+   Returns:
+   str: The generated index as a string.
 
-    with open(rst_file, 'r') as file:
-        text = file.read()
+   Raises:
+   FileNotFoundError: If the base_path or rst_file does not exist.
+   """
+   if not os.path.exists(base_path):
+      raise FileNotFoundError(errno.ENOENT, f"RST base_path does not exist at location: {base_path}")
 
-    relative_path = rst_file[len(base_path):]
-    doc = relative_path
-    ref = None
-    heading = None
-    index = ''
+   common_path = os.path.commonpath([base_path,rst_file])
+   if common_path != base_path:
+      raise FileNotFoundError(errno.ENOENT, f"RST base_path '{base_path}' does not contain rst_file: '{rst_file}'")
 
-    with open(rst_file, 'r') as file:
-        text = file.read()
+   with open(rst_file, 'r') as file:
+      text = file.read()
 
-    lines = text.splitlines()
+   relative_path = rst_file[len(base_path):]
+   doc = relative_path
+   ref = None
+   heading = None
+   index = ''
 
-    for i in range(0,len(lines)):
-        line = lines[i]
-        if len(line) == 0:
-            continue
+   with open(rst_file, 'r') as file:
+      text = file.read()
 
-        if ref:
-            heading = scan_heading(i,lines)
-            if heading:
-                logging.debug(" +- heading:"+heading)
-                anchor = ref
-                if doc:
-                    # reference to doc heading, no need for anchor
-                    index += ref + '=' + relative_path + "\n"
-                else:
-                    index += ref + '=' + relative_path + '#' + ref + "\n"
-                index += ref + '.title=' + heading + "\n"
-                ref = None
+   lines = text.splitlines()
 
-        if doc:
-            heading = scan_heading(i,lines)
-            if heading:
-                logging.debug(" +- page:"+heading)
-                index += doc + '=' + relative_path + "\n"
-                index += doc + '.title=' + heading + "\n"
-                doc = None
+   for i in range(0,len(lines)):
+      line = lines[i]
+      if len(line) == 0:
+         continue
 
-        match = re.search(r"^.. _((\w|.|-)*):$", line)
-        if match:
-            if ref:
-                logging.warning("reference "+ref+" defined without a heading, skipped")
+      if ref:
+         heading = scan_heading(i,lines)
+         if heading:
+               logging.debug(" +- heading:"+heading)
+               anchor = ref
+               if doc:
+                  # reference to doc heading, no need for anchor
+                  index += ref + '=' + relative_path + "\n"
+               else:
+                  index += ref + '=' + relative_path + '#' + ref + "\n"
+               index += ref + '.title=' + heading + "\n"
+               ref = None
 
-            ref = match.group(1)
-            logging.debug(" |   ref:"+ref)
+      if doc:
+         heading = scan_heading(i,lines)
+         if heading:
+               logging.debug(" +- page:"+heading)
+               index += doc + '=' + relative_path + "\n"
+               index += doc + '.title=' + heading + "\n"
+               doc = None
 
-    return index
+      match = re.search(r"^.. _((\w|.|-)*):$", line)
+      if match:
+         if ref:
+               logging.warning("reference "+ref+" defined without a heading, skipped")
+
+         ref = match.group(1)
+         logging.debug(" |   ref:"+ref)
+
+   return index
 
 def scan_heading(index: int, lines: list[str] ) -> str:
     """
@@ -1229,6 +1334,7 @@ def deepl_document(en_html:str, fr_html:str):
     :return: status
     """
 
+   
     if not os.path.exists(en_html):
        raise FileNotFoundError(errno.ENOENT, f"HTML file does not exist at location:", en_html)
 
