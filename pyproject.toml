@@ -9,7 +9,7 @@ authors = [
 ]
 description = "Translate from sphinx-build to mkdocs-material compatible markdown"
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 keywords = ["mkdocs", "markdown", "pandoc", "sphinx-build", "sphinx", "rst", "reStructuredText", "translate"]
 license = {text = "MIT-License"}
 classifiers = [
