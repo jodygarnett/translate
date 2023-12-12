@@ -436,6 +436,7 @@ def preprocess_rst(rst_file:str, rst_prep: str) -> str:
 
     text = _preprocess_rst_block_directive(rst_file, text, 'only', _block_directive_only)
     text = _preprocess_rst_block_directive(rst_file,text,'include',_block_directive_include)
+    text = _preprocess_rst_block_directive(rst_file,text,'parsed-literal', _block_directive_parsed_literal)
 
     if ':ref:' in text:
         text = _preprocess_rst_ref(rst_file,text)
@@ -596,6 +597,28 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
       process += toctree
 
    return process
+
+def _block_directive_parsed_literal(path: str, value:str, arguments, block, indent) -> str:
+    """
+    Treat this as a code-block so it at least shows up as a literal.
+    """
+
+    simplified = indent + '.. code-block::'
+    if value:
+        language = value.strip()
+        simplified += ' '+language+'\n'
+    else:
+        simplified += ' text\n'
+
+    simplified += indent + '\n'
+
+    if block:
+        for line in block.splitlines():
+            simplified += indent+'   '+line+'\n'
+    else:
+        logging.debug('parsed-literal expects a code block')
+
+    return simplified
 
 def _block_directive_only(path: str, value:str, arguments, block, indent) -> str:
     """
@@ -954,7 +977,7 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
 
        # accept code blocks as is
        if code:
-          code += line + '\n'
+          code += '\n' + line
           continue;
 
        # non-code clean content
@@ -1123,15 +1146,12 @@ def _postprocess_pandoc_fenced_divs(md_file:str, text: str) -> str:
              continue
 
           # unexpected
-          print(md_file + ':' + str(process.count('\n'))+ ' unexpected:')
-          print("  admonition",admonition)
-          print("  type",type)
-          print("  title",title)
-          print("  note",note)
-          print("  line",line)
-          print("  process",len(process))
-          print()
-          print(process)
+          logger.error(md_file + ':' + str(process.count('\n'))+ ' unexpected:')
+          logger.error("  admonition",admonition)
+          logger.error("  type",type)
+          logger.error("  title",title)
+          logger.error("  note",note)
+          logger.debug(process)
           raise ValueError('unclear what to process '+str(type)+" "+str(title)+"\n"+md_file)
 
        else:
@@ -1139,11 +1159,12 @@ def _postprocess_pandoc_fenced_divs(md_file:str, text: str) -> str:
 
    if admonition:
       # fenced div was at end of file
-      print("unexpected:")
-      print("  admonition",admonition)
-      print("  type",type)
-      print("  title",title)
-      print("  note",note)
+      logger.error(md_file + ':' + str(process.count('\n'))+ ' unexpected:')
+      logger.error("  admonition",admonition)
+      logger.error("  type",type)
+      logger.error("  title",title)
+      logger.error("  note",note)
+      logger.debug(process)
       raise ValueError('Expected ::: to end fence dive '+str(type)+' '+str(title)+' '+str(note)+"\n"+md_file)
 
    return process
