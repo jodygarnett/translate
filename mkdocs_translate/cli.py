@@ -128,9 +128,6 @@ def rst(
 
     The rst directives are simplified prior to conversion following our writing guide:
     gui-label, menuselection, file, command
-
-    Manual cleanup required for:
-      figure
     """
     init_anchors()
 
