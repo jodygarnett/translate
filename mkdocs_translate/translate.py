@@ -9,6 +9,7 @@ import requests
 import subprocess
 import yaml
 
+from typing import Callable
 from mkdocs_translate import __app_name__, __version__
 
 logger = logging.getLogger(__app_name__)
@@ -428,8 +429,7 @@ def preprocess_rst(rst_file:str, rst_prep: str) -> str:
     if '.. toctree::' in text:
         text = _preprocess_rst_toctree(rst_file,text)
 
-    if ':doc:' in text:
-        text = _preprocess_rst_doc(rst_file,text)
+    text = _preprocess_rst_block_directive(rst_file,text,'include',_block_directive_include)
 
     if ':ref:' in text:
         text = _preprocess_rst_ref(rst_file,text)
@@ -590,6 +590,147 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
       process += toctree
 
    return process
+def _block_directive_include(path: str, value:str, arguments, block, indent) -> str:
+    """
+    Called by _preprocess_rst_block_directive to convert sphinx directive to raw markdown code block.
+    """
+    relative_path = value.strip();
+
+    if relative_path[0:1] == '/':
+        relative_path = relative_path[1:]
+        for _ in range(path.count('/')-1):
+            relative_path = '../'+relative_path
+
+    raw = indent + '.. code-block:: raw_markdown\n\n'
+    raw += indent + '   {%\n'
+    raw += indent + '      include-markdown "' + relative_path + '"\n'
+    if 'start-line' in arguments:
+        logging.warning('include '+value+' directive: start-line option ignored, change rst to start-after which is supported')
+    if 'end-line' in arguments:
+        logging.warning('include '+value+' directive: end-line option ignored, change rst tp end-before option which is supported')
+
+    if block:
+        logging.warning('include '+value+' directive: invalid use of directive block content')
+
+    if 'start-after' in arguments:
+        start = arguments['start-after']
+        raw += indent + '      start="' + start + '"\n'
+    if 'end-before' in arguments:
+        start = arguments['end-before']
+        raw += indent + '      end="' + start + '"\n'
+
+    raw += indent + '   %}\n'
+
+    return raw
+
+def _preprocess_rst_block_directive(path: str, text: str, directive: str, to_markdown: Callable[...,str]) -> str:
+    """
+    scan document for directive
+    """
+    if '.. '+directive+'::' not in text:
+        # no processing required
+        return text
+
+    # ..<directive>:: <directive_value>
+    #   <argument>:<value>
+    #
+    #   directive_content
+
+    directive_value = None
+    directive_arguments = None  # arguments while capturing
+    directive_content = None  # rst content while capturing
+
+    directive_raw = None
+    indent = None  # indent while capturing
+
+    directive_output = None  # directive output
+
+    # processed text
+    process = ''
+    logging.debug("preprocessing figure: " + path)
+    for line in text.splitlines():
+        logging.debug('processing:'+line)
+        blank = len(line.strip()) == 0
+        if directive_raw == None:
+            match = re.search(r"^(\s*)\.\. "+directive+"::(.*)$", line)
+            if match:
+                # figure directive started
+                directive_raw = line + '\n'
+
+                indent = match.group(1)
+                directive_value = match.group(2)
+                directive_content = None
+                directive_arguments = {}
+
+                logging.debug("    "+directive+": " + directive_value)
+                continue
+            else:
+                # logging.debug('      scan:'+line)
+                process += line + '\n'
+                continue
+        else:
+            indented = len(line) - len(line.lstrip())
+            if blank and directive_content is None:
+                logging.debug('     blank:' + line)
+                # capture content next
+                directive_raw += line + '\n'
+                directive_content = ''
+                continue
+            elif line[indented:indented+1] == ':' and directive_content is None:
+                logging.debug('   process:' + line)
+                # capture arguments
+                directive_raw += line + '\n'
+                (ignore, option, value) = line.split(':', 2)
+                logging.debug("      " + option + '="' + value + '"')
+                directive_arguments[option] = value.lstrip()
+                continue
+            elif indented > len(indent):
+                # directive content
+                directive_raw += line + '\n'
+                content = line.strip()
+                logging.debug('   content:' + content)
+
+                if directive_content is None or directive_content == '':
+                    directive_content = content
+                else:
+                    directive_content += '\n' + content
+
+                continue
+            else:
+                logging.debug('      done:' + line)
+
+                # end directive
+                if directive_arguments:
+                    logging.debug('      arguments:' + str(directive_arguments))
+                if directive_content:
+                    logging.debug('      content:' + directive_content)
+                logging.debug("      rst:\n" + directive_raw)
+
+                directive_output = to_markdown(path, directive_value, directive_arguments, directive_content, indent)
+
+                logging.debug("      out:\n" + directive_output)
+
+                process += directive_output
+
+                process += '\n' + line + '\n'
+                directive_raw = None
+                directive_output = None
+                directive_arguments = None
+                directive_content = None
+                indent = None
+                continue
+
+    # reached the end of the text content
+    # check if we we were in the middle of processing directive
+    if directive_raw != None:
+        # end directive at end of file
+        logging.debug("      rst:\n" + directive_raw)
+        directive_output = to_markdown(path, directive_value, directive_arguments, directive_content, indent)
+        logging.debug("      out:\n" + directive_output)
+
+        process += directive_output + '\n'
+
+    return process
 
 def _preprocess_rst_figure(path: str, text: str) -> str:
    """
@@ -691,7 +832,11 @@ def _preprocess_rst_figure(path: str, text: str) -> str:
 
 def _preprocess_rst_strip(path: str, text: str, directive: str) -> str:
    """
-   scan document and strip indicated block directive
+   Scan document and strip indicated block directive.
+
+   This is used to filter out directives such as '.. contents::` that do not have a markdown equivalent.
+
+   Return processed text
    """
    block = None
    process = ''
@@ -728,6 +873,9 @@ def _preprocess_rst_strip(path: str, text: str, directive: str) -> str:
 def postprocess_rst_markdown(md_file: str, md_clean: str):
     """
     Postprocess pandoc generated markdown for mkdocs use.
+
+    md_file location of markdown file generated by pandoc
+    md_clean location to write cleaned markdown contents
     """
 
     with open(md_file, 'r') as markdown:
@@ -736,7 +884,6 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     # process pandoc ::: adominitions to mkdocs representation
     if ':::' in text:
         text = _postprocess_pandoc_fenced_divs(md_file, text)
-
 
     if "{.title-ref}" in text:
         # some strange thing where `TEXT` is taken to be a wiki link
@@ -750,14 +897,24 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     # review line by line (skipping fenced code blocks)
     clean = ''
     code = None
+    code_language = None
+
     for line in text.splitlines():
-       if re.match("^(.*)```", line):
+       match = re.search(r"^(.*)```(.*)$", line)
+       if match:
           if code == None:
-            code = line + '\n'
+            code_language = match.group(2)
+            if "raw_markdown" in code_language:
+                code = ''
+            else:
+                code = line
           else:
-            code += line
-            clean += code + '\n'
+            if "raw_markdown" not in code_language:
+                code += '\n' + line
+
+            clean += code
             code = None
+            code_language = None
           continue
 
        # accept code blocks as is
