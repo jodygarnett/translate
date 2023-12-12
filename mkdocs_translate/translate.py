@@ -80,15 +80,15 @@ def init_config(override_path: str) -> None:
 
     rst_folder = docs_folder
     if 'rst_folder' in config:
-        rst_folder = config['rst_folder']
+        rst_folder = os.path.join(config['project_folder'],config['rst_folder'])
 
     if not os.path.exists(docs_folder):
        logger.debug(f"The docs folder does not exist at location: {docs_folder}")
-       #raise FileNotFoundError(errno.ENOENT, f"The docs folder does not exist at location:", docs_folder)
+       raise FileNotFoundError(errno.ENOENT, f"The docs folder does not exist at location:", docs_folder)
 
     if not os.path.exists(rst_folder):
        logger.debug(f"The rst folder does not exist at location: {rst_folder}")
-       #raise FileNotFoundError(errno.ENOENT, f"The rst folder does not exist at location:", rst_folder)
+       raise FileNotFoundError(errno.ENOENT, f"The rst folder does not exist at location:", rst_folder)
 
     logger.debug('--- start configuration ---')
     logger.debug('  mkdocs: %s',docs_folder)
@@ -106,7 +106,7 @@ def load_anchors(anchor_txt:str) -> dict[str,str]:
        reference=/absolut/path/to/file.md#anchor
     """
     if not os.path.exists(anchor_txt):
-       logger.warning("Anchors definition file not avaialble - to creae run: python3 -m translate index")
+       logger.warning("Anchors definition file not available - to create run: python3 -m translate index")
        raise FileNotFoundError(errno.ENOENT, f"anchors definition file does not exist at location:", anchor_txt)
 
     index = {}
@@ -375,11 +375,16 @@ def convert_rst(rst_file: str) -> str:
        raise FileNotFoundError(errno.ENOENT, f"Rich-structued-text 'rst' extension required:", rst_file)
 
     # file we are generating
-    md_file = rst_file.replace(".txt",".md")
-    md_file = md_file.replace(".rst",".md")
+    md_file = rst_file.replace(".rst", ".md").replace(".txt",".md")
+
+    if md_file.startswith(rst_folder):
+        md_file = md_file.replace(rst_folder,docs_folder)
+
+    if 'rst_folder' in config and 'docs_folder' in config and config['rst_folder']  != config['docs_folder']:
+        md_file = md_file.replace(config['rst_folder'], config['docs_folder'])
 
     # temp file for processing
-    md_tmp_file = re.sub("^docs/",convert_folder+'/', rst_file)
+    md_tmp_file = re.sub("^"+config['rst_folder']+"/",convert_folder+'/', rst_file)
     md_tmp_file = md_tmp_file.replace(".txt",".md")
     md_tmp_file = md_tmp_file.replace(".rst",".md")
     md_tmp_file = md_tmp_file.replace(".md",".tmp.md")
@@ -429,6 +434,7 @@ def preprocess_rst(rst_file:str, rst_prep: str) -> str:
     if '.. toctree::' in text:
         text = _preprocess_rst_toctree(rst_file,text)
 
+    text = _preprocess_rst_block_directive(rst_file, text, 'only', _block_directive_only)
     text = _preprocess_rst_block_directive(rst_file,text,'include',_block_directive_include)
 
     if ':ref:' in text:
@@ -590,6 +596,29 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
       process += toctree
 
    return process
+
+def _block_directive_only(path: str, value:str, arguments, block, indent) -> str:
+    """
+    Process only directive into admonition directive to simplify processing for pandoc.
+    Special case using snapshot for nightly build.
+    """
+    admonition = value.strip()
+    if admonition == 'snapshot':
+        admonition = "Nightly Build"
+
+    if admonition == 'not snapshot':
+        admonition = "Release"
+
+    admonition = admonition.title()
+
+    simplified = indent + '.. admonition:: '+admonition+'\n'
+    simplified += indent + '\n'
+    if block:
+        for line in block.splitlines():
+            simplified += indent+'   '+line+'\n'
+
+    return simplified+'\n'
+
 def _block_directive_include(path: str, value:str, arguments, block, indent) -> str:
     """
     Called by _preprocess_rst_block_directive to convert sphinx directive to raw markdown code block.
@@ -651,6 +680,7 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str, to_mar
     for line in text.splitlines():
         logging.debug('processing:'+line)
         blank = len(line.strip()) == 0
+
         if directive_raw == None:
             match = re.search(r"^(\s*)\.\. "+directive+"::(.*)$", line)
             if match:
@@ -697,28 +727,33 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str, to_mar
 
                 continue
             else:
-                logging.debug('      done:' + line)
-
                 # end directive
-                if directive_arguments:
-                    logging.debug('      arguments:' + str(directive_arguments))
-                if directive_content:
-                    logging.debug('      content:' + directive_content)
-                logging.debug("      rst:\n" + directive_raw)
-
                 directive_output = to_markdown(path, directive_value, directive_arguments, directive_content, indent)
-
-                logging.debug("      out:\n" + directive_output)
-
                 process += directive_output
 
-                process += '\n' + line + '\n'
-                directive_raw = None
-                directive_output = None
-                directive_arguments = None
-                directive_content = None
-                indent = None
-                continue
+                # process current line
+                match = re.search(r"^(\s*)\.\. " + directive + "::(.*)$", line)
+                if match:
+                    # figure directive started
+                    directive_raw = line + '\n'
+                    indent = match.group(1)
+                    directive_value = match.group(2)
+                    directive_content = None
+                    directive_arguments = {}
+
+                    logging.debug("    " + directive + ": " + directive_value)
+                    continue
+                else:
+                    process += line + '\n'
+
+                    # reset state for scanning
+                    directive_raw = None
+                    indent = None
+                    directive_value = None
+                    directive_content = None
+                    directive_arguments = None
+
+                    continue
 
     # reached the end of the text content
     # check if we we were in the middle of processing directive
@@ -1088,7 +1123,7 @@ def _postprocess_pandoc_fenced_divs(md_file:str, text: str) -> str:
              continue
 
           # unexpected
-          print("unexpected:")
+          print(md_file + ':' + str(process.count('\n'))+ ' unexpected:')
           print("  admonition",admonition)
           print("  type",type)
           print("  title",title)
