@@ -17,16 +17,16 @@ from mkdocs_translate import __app_name__, __version__
 logger = logging.getLogger(__app_name__)
 
 # global configuration setup by cli._config_callback
-config = {}
-docs_folder = None
-rst_folder = None
-upload_folder = None
-convert_folder = None
-download_folder = None
-anchor_file = None
+config: dict = {}
+docs_folder: str = None
+rst_folder: str = None
+upload_folder: str = None
+convert_folder: str = None
+download_folder: str = None
+anchor_file: str = None
 
-anchors = {}
-docs_folder = None
+anchors:dict = {}
+
 
 md_extensions_to = 'markdown+definition_lists+fenced_divs+backtick_code_blocks+fenced_code_attributes-simple_tables+pipe_tables'
 md_extensions_from = 'markdown+definition_lists+fenced_divs+backtick_code_blocks+fenced_code_attributes+pipe_tables'
@@ -439,12 +439,13 @@ def preprocess_rst(rst_file:str, rst_prep: str) -> str:
     text = _preprocess_rst_block_directive(rst_file, text, 'only', _block_directive_only)
     text = _preprocess_rst_block_directive(rst_file,text,'include',_block_directive_include)
     text = _preprocess_rst_block_directive(rst_file,text,'parsed-literal', _block_directive_parsed_literal)
+    text = _preprocess_rst_block_directive(rst_file,text,'figure', _block_directive_figure)
 
     if ':ref:' in text:
         text = _preprocess_rst_ref(rst_file,text)
 
-    if '.. figure::' in text:
-        text = _preprocess_rst_figure(rst_file,text)
+#    if '.. figure::' in text:
+#        text = _preprocess_rst_figure(rst_file,text)
     
     # strip unsupported things
     if '.. index::' in text:
@@ -498,14 +499,18 @@ def preprocess_rst(rst_file:str, rst_prep: str) -> str:
         flags=re.MULTILINE
     )
     # rst_epilog stuff from config.py
-    text = text.replace("|project_name|","GeoNetwork")
-    text = text.replace("|jdbc.properties|",r"**`WEB-INF/config-db/jdbc.properties`**")
-    text = text.replace("|config.node.folder|",r"**`WEB-INF/config-db/jdbc.properties`**")
-    text = text.replace("|web.xml|",r"**`WEB-INF/web.xml`**")
-    text = text.replace("|default.node|",r"`srv`")
-    text = text.replace("|default.node.config.file|",r"**`WEB-INF/config-node/srv.xml`**")
-    text = text.replace("|default.node|",r"`srv`")
-    text = text.replace("|install.homepage|",r"`http://localhost:8080/geonetwork`")
+    # text = text.replace("|project_name|","GeoNetwork")
+    # text = text.replace("|jdbc.properties|",r"**`WEB-INF/config-db/jdbc.properties`**")
+    # text = text.replace("|config.node.folder|",r"**`WEB-INF/config-db/jdbc.properties`**")
+    # text = text.replace("|web.xml|",r"**`WEB-INF/web.xml`**")
+    # text = text.replace("|default.node|",r"`srv`")
+    # text = text.replace("|default.node.config.file|",r"**`WEB-INF/config-node/srv.xml`**")
+    # text = text.replace("|default.node|",r"`srv`")
+    # text = text.replace("|install.homepage|",r"`http://localhost:8080/geonetwork`")
+    if 'substitutions' in config:
+        replace: dict[str,str] = config['substitutions']
+        for (key, value) in replace.items():
+            text = text.replace('|' + key + '|', str(value))
 
     with open(rst_prep,'w') as rst:
         rst.write(text)
@@ -638,25 +643,18 @@ def _block_directive_figure(path: str, value:str, arguments: dict[str,str], bloc
             line = line.strip()
             blank: bool = len(line) == 0
             if blank:
-                if not legend:
+                if legend == None:
                     legend = ''
-                if legend:
+                else:
                     legend += '\n'
             else:
-                if caption not None and legend:
-                    legend += line + '\n'
-                elif caption and not legend:
-                    legend += line + '\n'
-                elif caption and legend:
-                    caption += line + '\n'
-
-        if block.count('\n\n') == 0:
-            # caption
-            caption = block.strip()
-            legend = None
-        else:
-            # caption and legend
-            (caption,legend) = block.split('\n\n',2)
+                if caption == None:
+                    caption = line
+                else:
+                   if legend != None:
+                       legend += line + '\n'
+                   else:
+                       caption += line + '\n'
 
         if caption[0:1] != '*' and caption[-1:] != '*':
             caption = '*'+caption+'*'
@@ -796,7 +794,7 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str, direct
 
     # processed text
     process = ''
-    logging.debug("preprocessing " + direcive + ": " + path)
+    logging.debug("preprocessing " + directive + ": " + path)
     for line in text.splitlines():
         logging.debug('processing:'+line)
         blank = len(line.strip()) == 0
@@ -887,103 +885,103 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str, direct
 
     return process
 
-def _preprocess_rst_figure(path: str, text: str) -> str:
-   """
-   scan document for figure directive
-   """
-   block = None
-   
-   indent = None  # indent while capturing
-   arguments = None # arguments while capturing
-   content = None # content while capturing
-   figure = None  # simplified
-   
-   # processed text
-   process = ''
-   logging.debug("preprocessing figure: "+path)
-   for line in text.splitlines():
-       # logging.debug('processing:'+line)
-       blank = len(line.strip()) == 0
-       if block == None:
-          match = re.search(r"^(\s*)\.\. figure::\s*((\w|-|\.)*)$", line)
-          if match:
-             # figure directive started
-             block = line + '\n'
-             indent = match.group(1)
-             image = match.group(2)
-             
-             content = None
-             arguments = {}
-             figure = indent + '.. image:: '+image+'\n'
-             
-             logging.debug("    figure: " + image)
-             continue
-          else:
-             # logging.debug('      scan:'+line)
-             process += line + '\n'
-             continue
-       else:
-          indented = len(line) - len(line.lstrip())
-          if blank and content == None:
-             logging.debug('     blank:'+line)
-             # capture content next
-             block += line + '\n'
-             content = ''
-             continue
-          elif line.strip()[indented:1] == ':' and content == None:
-             logging.debug('   process:'+line)
-             # capture arguments
-             block += line + '\n'
-             (ignore,option,value) = line.split(':',2)
-             logging.debug("      "+option+'='+value)
-             arguments[option] = value
-             continue
-          elif indented > len(indent):
-             # directive content
-             block += line + '\n'
-             
-             if content == '':
-                 logging.debug('   caption:'+line)
-                 caption = line.strip()
-                 print(caption, caption[0], caption[-1])
-                 if caption[0] == '*' and caption[-1] == '*':
-                     content = indent + caption
-                 else:
-                     content = indent + '*'+caption+'*'
-             else:
-                 logging.debug('   legend:'+line)
-                 content += '\n'+indent+line.strip()
-             # figure += indent + line.strip() + '\n'
-             continue
-          else:
-             logging.debug('      done:'+line)
-             # end directive
-             if arguments:
-                 logging.debug('      arguments:'+str(arguments))
-             if content:
-                 logging.debug('      content:'+content)
-             
-             logging.debug("rst figure:\n"+block)
-             logging.debug("rst image:\n"+figure)
-             process += figure
-             if content:
-                 process += content + '\n'
-
-             process += '\n' + line + '\n'
-             block = None
-             figure = None
-             indent = None
-             arguments = None
-             content = None
-             continue
-
-   if block != None:
-      # end directive at end of file
-      logging.debug("rst figure:\n"+block)
-      logging.debug("markdown image:]m"+figure)
-      process += figure + '\n'
-
-   return process
+# def _preprocess_rst_figure(path: str, text: str) -> str:
+#    """
+#    scan document for figure directive
+#    """
+#    block = None
+#
+#    indent = None  # indent while capturing
+#    arguments = None # arguments while capturing
+#    content = None # content while capturing
+#    figure = None  # simplified
+#
+#    # processed text
+#    process = ''
+#    logging.debug("preprocessing figure: "+path)
+#    for line in text.splitlines():
+#        # logging.debug('processing:'+line)
+#        blank = len(line.strip()) == 0
+#        if block == None:
+#           match = re.search(r"^(\s*)\.\. figure::\s*((\w|-|\.)*)$", line)
+#           if match:
+#              # figure directive started
+#              block = line + '\n'
+#              indent = match.group(1)
+#              image = match.group(2)
+#
+#              content = None
+#              arguments = {}
+#              figure = indent + '.. image:: '+image+'\n'
+#
+#              logging.debug("    figure: " + image)
+#              continue
+#           else:
+#              # logging.debug('      scan:'+line)
+#              process += line + '\n'
+#              continue
+#        else:
+#           indented = len(line) - len(line.lstrip())
+#           if blank and content == None:
+#              logging.debug('     blank:'+line)
+#              # capture content next
+#              block += line + '\n'
+#              content = ''
+#              continue
+#           elif line.strip()[indented:1] == ':' and content == None:
+#              logging.debug('   process:'+line)
+#              # capture arguments
+#              block += line + '\n'
+#              (ignore,option,value) = line.split(':',2)
+#              logging.debug("      "+option+'='+value)
+#              arguments[option] = value
+#              continue
+#           elif indented > len(indent):
+#              # directive content
+#              block += line + '\n'
+#
+#              if content == '':
+#                  logging.debug('   caption:'+line)
+#                  caption = line.strip()
+#                  print(caption, caption[0], caption[-1])
+#                  if caption[0] == '*' and caption[-1] == '*':
+#                      content = indent + caption
+#                  else:
+#                      content = indent + '*'+caption+'*'
+#              else:
+#                  logging.debug('   legend:'+line)
+#                  content += '\n'+indent+line.strip()
+#              # figure += indent + line.strip() + '\n'
+#              continue
+#           else:
+#              logging.debug('      done:'+line)
+#              # end directive
+#              if arguments:
+#                  logging.debug('      arguments:'+str(arguments))
+#              if content:
+#                  logging.debug('      content:'+content)
+#
+#              logging.debug("rst figure:\n"+block)
+#              logging.debug("rst image:\n"+figure)
+#              process += figure
+#              if content:
+#                  process += content + '\n'
+#
+#              process += '\n' + line + '\n'
+#              block = None
+#              figure = None
+#              indent = None
+#              arguments = None
+#              content = None
+#              continue
+#
+#    if block != None:
+#       # end directive at end of file
+#       logging.debug("rst figure:\n"+block)
+#       logging.debug("markdown image:]m"+figure)
+#       process += figure + '\n'
+#
+#    return process
 
 def _preprocess_rst_strip(path: str, text: str, directive: str) -> str:
    """

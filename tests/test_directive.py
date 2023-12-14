@@ -51,26 +51,27 @@ class TestDirective(unittest.TestCase):
 
     def test_figure_directive(self):
         process = mkdocs_translate.translate._block_directive_figure("test.rst", "images/example.png", {}, None, "   ")
-        self.assertEqual(3, len(process.splitlines()),"single line");
+        self.assertEqual(3, len(process.splitlines()),"fenced single line");
         self.assertTrue('example.png' in process)
 
         process = mkdocs_translate.translate._block_directive_figure("test.rst", "images/example.svg", {}, "caption content", "   ")
         self.assertTrue('example.svg' in process)
         self.assertTrue('caption content' in process)
-        self.assertEqual(4, len(process.splitlines()), "single line");
+        self.assertEqual(4, len(process.splitlines()), "fenced two lines");
 
-        caption = """caption
-        
-        legend information:
-        * one
-        * two
-        """
-        process = mkdocs_translate.translate._block_directive_figure("test.rst", "/figure/diagram.svg", {}, caption, "   ")
+        block = (
+            "caption\n"
+            "multiline\n"
+            "\n"
+            "legend information:\n"
+            "* one"
+            "* two"
+        )
+        process = mkdocs_translate.translate._block_directive_figure("test.rst", "/figure/diagram.svg", {}, block, "   ")
         self.assertTrue('diagram.svg' in process)
-        self.assertTrue('caption content' in process)
+        self.assertTrue('caption' in process)
+        self.assertTrue('multiline' in process)
         self.assertTrue('.. note::' in process)
-        self.assertEqual(7, len(process.splitlines()), "single line");
-
 
 if __name__ == '__main__':
     unittest.main()
