@@ -39,7 +39,7 @@ class TestDirective(unittest.TestCase):
             Goodbye        
             """
 
-    def test_directive(self):
+    def test_preprocess_rst_block_directive(self):
         output = mkdocs_translate.translate._preprocess_rst_block_directive( "inline", self.text, "ignore", _callback)
         self.assertTrue('Discussion text' in output)
 
@@ -49,9 +49,27 @@ class TestDirective(unittest.TestCase):
         output = mkdocs_translate.translate._preprocess_rst_block_directive("inline", self.text, "code-block", _callback)
         self.assertTrue('caption=caption' in output)
 
+    def test_figure_directive(self):
+        process = mkdocs_translate.translate._block_directive_figure("test.rst", "images/example.png", {}, None, "   ")
+        self.assertEqual(3, len(process.splitlines()),"single line");
+        self.assertTrue('example.png' in process)
 
-    def test_sum(self):
-        self.assertEqual(sum([1, 2, 3]), 6, "Should be 6")
+        process = mkdocs_translate.translate._block_directive_figure("test.rst", "images/example.svg", {}, "caption content", "   ")
+        self.assertTrue('example.svg' in process)
+        self.assertTrue('caption content' in process)
+        self.assertEqual(4, len(process.splitlines()), "single line");
+
+        caption = """caption
+        
+        legend information:
+        * one
+        * two
+        """
+        process = mkdocs_translate.translate._block_directive_figure("test.rst", "/figure/diagram.svg", {}, caption, "   ")
+        self.assertTrue('diagram.svg' in process)
+        self.assertTrue('caption content' in process)
+        self.assertTrue('.. note::' in process)
+        self.assertEqual(7, len(process.splitlines()), "single line");
 
 
 if __name__ == '__main__':

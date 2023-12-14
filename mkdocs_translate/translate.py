@@ -10,6 +10,8 @@ import subprocess
 import yaml
 
 from typing import Callable
+from typing import List
+from typing import Dict
 from mkdocs_translate import __app_name__, __version__
 
 logger = logging.getLogger(__app_name__)
@@ -598,7 +600,100 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
 
    return process
 
-def _block_directive_parsed_literal(path: str, value:str, arguments, block, indent) -> str:
+def _to_relative_path(current_file:str, reference: str) -> str:
+    """
+    Converts sphinx path reference conventions to a relative path:
+    
+    * Absolute path: Use of leading / indicates path from the root of the document structure (often conf.py location).
+      This is converted to a relative apath from current_file location.
+    
+    * Relative path: relative path from current_file location
+    
+    return relative path from current file location  
+    """
+    relative_path = reference.strip();
+
+    if relative_path[0:1] == '/':
+        relative_path = relative_path[1:]
+        for _ in range(current_file.count('/')-1):
+            relative_path = '../'+relative_path
+
+    return relative_path
+
+def _block_directive_figure(path: str, value:str, arguments: dict[str,str], block:str, indent:str) -> str:
+    """
+    Map figure to specific markdown formatting to take advantage of css style.
+    See writing guide for background information on this choice.
+    """
+
+    image = _to_relative_path( path, value )
+
+    raw  = indent + '.. code-block:: raw_markdown\n\n'
+    raw += indent + '   ![](' + image + ')\n'
+
+    caption: str = None
+    legend: str = None
+    if block:
+        for line in block.splitlines():
+            line = line.strip()
+            blank: bool = len(line) == 0
+            if blank:
+                if not legend:
+                    legend = ''
+                if legend:
+                    legend += '\n'
+            else:
+                if caption not None and legend:
+                    legend += line + '\n'
+                elif caption and not legend:
+                    legend += line + '\n'
+                elif caption and legend:
+                    caption += line + '\n'
+
+        if block.count('\n\n') == 0:
+            # caption
+            caption = block.strip()
+            legend = None
+        else:
+            # caption and legend
+            (caption,legend) = block.split('\n\n',2)
+
+        if caption[0:1] != '*' and caption[-1:] != '*':
+            caption = '*'+caption+'*'
+
+        if caption:
+            for line in caption.split('\n'):
+                raw += indent + '   ' + line + '\n'
+
+        if legend:
+            raw += indent + '   \n'
+            raw += indent + '.. note::\n\n'
+            for line in legend.split('\n'):
+                raw += indent + '   ' + line + '\n'
+
+    return raw
+
+    raw += indent + '      include-markdown "' + relative_path + '"\n'
+    if 'start-line' in arguments:
+        logging.warning('include '+value+' directive: start-line option ignored, change rst to start-after which is supported')
+    if 'end-line' in arguments:
+        logging.warning('include '+value+' directive: end-line option ignored, change rst tp end-before option which is supported')
+
+    if block:
+        logging.warning('include '+value+' directive: invalid use of directive block content')
+
+    if 'start-after' in arguments:
+        start = arguments['start-after']
+        raw += indent + '      start="' + start + '"\n'
+    if 'end-before' in arguments:
+        start = arguments['end-before']
+        raw += indent + '      end="' + start + '"\n'
+
+    raw += indent + '   %}\n'
+
+    return raw
+
+def _block_directive_parsed_literal(path: str, value:str, arguments: dict[str,str], block:str, indent:str) -> str:
     """
     Treat this as a code-block so it at least shows up as a literal.
     """
@@ -620,7 +715,7 @@ def _block_directive_parsed_literal(path: str, value:str, arguments, block, inde
 
     return simplified
 
-def _block_directive_only(path: str, value:str, arguments, block, indent) -> str:
+def _block_directive_only(path: str, value:str, arguments: dict[str,str], block:str, indent:str) -> str:
     """
     Process only directive into admonition directive to simplify processing for pandoc.
     Special case using snapshot for nightly build.
@@ -642,7 +737,7 @@ def _block_directive_only(path: str, value:str, arguments, block, indent) -> str
 
     return simplified+'\n'
 
-def _block_directive_include(path: str, value:str, arguments, block, indent) -> str:
+def _block_directive_include(path: str, value:str, arguments: dict[str,str], block:str, indent:str) -> str:
     """
     Called by _preprocess_rst_block_directive to convert sphinx directive to raw markdown code block.
     """
@@ -675,9 +770,11 @@ def _block_directive_include(path: str, value:str, arguments, block, indent) -> 
 
     return raw
 
-def _preprocess_rst_block_directive(path: str, text: str, directive: str, to_markdown: Callable[...,str]) -> str:
+def _preprocess_rst_block_directive(path: str, text: str, directive: str, directive_processing: Callable[...,str]) -> str:
     """
-    scan document for directive
+    Scan document for sphinx-build block directive, delegating to directive_processing callable.
+
+    returns processed text
     """
     if '.. '+directive+'::' not in text:
         # no processing required
@@ -699,7 +796,7 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str, to_mar
 
     # processed text
     process = ''
-    logging.debug("preprocessing figure: " + path)
+    logging.debug("preprocessing " + direcive + ": " + path)
     for line in text.splitlines():
         logging.debug('processing:'+line)
         blank = len(line.strip()) == 0
@@ -707,7 +804,7 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str, to_mar
         if directive_raw == None:
             match = re.search(r"^(\s*)\.\. "+directive+"::(.*)$", line)
             if match:
-                # figure directive started
+                # directive started
                 directive_raw = line + '\n'
 
                 indent = match.group(1)
@@ -751,13 +848,13 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str, to_mar
                 continue
             else:
                 # end directive
-                directive_output = to_markdown(path, directive_value, directive_arguments, directive_content, indent)
+                directive_output = directive_processing(path, directive_value, directive_arguments, directive_content, indent)
                 process += directive_output
 
                 # process current line
                 match = re.search(r"^(\s*)\.\. " + directive + "::(.*)$", line)
                 if match:
-                    # figure directive started
+                    # directive started
                     directive_raw = line + '\n'
                     indent = match.group(1)
                     directive_value = match.group(2)
@@ -783,7 +880,7 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str, to_mar
     if directive_raw != None:
         # end directive at end of file
         logging.debug("      rst:\n" + directive_raw)
-        directive_output = to_markdown(path, directive_value, directive_arguments, directive_content, indent)
+        directive_output = directive_processing(path, directive_value, directive_arguments, directive_content, indent)
         logging.debug("      out:\n" + directive_output)
 
         process += directive_output + '\n'
@@ -961,14 +1058,16 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
        match = re.search(r"^(.*)```(.*)$", line)
        if match:
           if code == None:
+            # starts code-block
             code_language = match.group(2)
             if "raw_markdown" in code_language:
                 code = ''
             else:
-                code = line
+                code = line + '\n'
           else:
+            # ends code-block
             if "raw_markdown" not in code_language:
-                code += '\n' + line
+                code += line + '\n'
 
             clean += code
             code = None
@@ -977,7 +1076,7 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
 
        # accept code blocks as is
        if code:
-          code += '\n' + line
+          code += line + '\n'
           continue;
 
        # non-code clean content
