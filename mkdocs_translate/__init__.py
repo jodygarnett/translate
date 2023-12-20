@@ -21,4 +21,3 @@ ERRORS = {
     API_READ_ERROR: "REST API write error",
     ID_ERROR: "id error",
 }
-
