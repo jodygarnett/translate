@@ -1063,6 +1063,8 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     code = None
     code_language = None
 
+    HEADER_ANCHOR = re.compile(r'^# (.*) \{#.*}$')
+
     for line in text.splitlines():
        match = re.search(r"^(.*)```(.*)$", line)
        if match:
@@ -1115,6 +1117,11 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
        line = line.replace(r'\|', '|')
        line = line.replace(r'\@', '@')
 
+       # initial header anchor causes conflicts with use of mkdocs-macros-plugin
+       match = HEADER_ANCHOR.match(line)
+       if match:
+           line = '# '+match.group(1)
+
        clean += line + '\n'
 
     if code:
@@ -1122,10 +1129,9 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
        clean += code
 
     # add header if needed to process mkdocs extra variables
-
-    MACRO = re.compile('\{\{ .* \}\}')
+    MACRO = re.compile(r'\{\{ .* \}\}')
     if MACRO.search(clean):
-        clean = 'render_macros: true\n---\n' + clean
+        clean = '---\nrender_macros: true\n---\n\n' + clean
 
     with open(md_clean,'w') as markdown:
         markdown.write(clean)
