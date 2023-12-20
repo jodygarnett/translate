@@ -499,21 +499,32 @@ def preprocess_rst(rst_file:str, rst_prep: str) -> str:
         flags=re.MULTILINE
     )
     # rst_epilog stuff from config.py
-    # text = text.replace("|project_name|","GeoNetwork")
-    # text = text.replace("|jdbc.properties|",r"**`WEB-INF/config-db/jdbc.properties`**")
-    # text = text.replace("|config.node.folder|",r"**`WEB-INF/config-db/jdbc.properties`**")
-    # text = text.replace("|web.xml|",r"**`WEB-INF/web.xml`**")
-    # text = text.replace("|default.node|",r"`srv`")
-    # text = text.replace("|default.node.config.file|",r"**`WEB-INF/config-node/srv.xml`**")
-    # text = text.replace("|default.node|",r"`srv`")
-    # text = text.replace("|install.homepage|",r"`http://localhost:8080/geonetwork`")
+    # static
     if 'substitutions' in config:
         replace: dict[str,str] = config['substitutions']
         for (key, value) in replace.items():
             text = text.replace('|' + key + '|', str(value))
+    # dynamic
+    if '|version|' in text:
+        text = text.replace('|version|', ' {{ version }}')
+    if '|release|' in text:
+        text = text.replace('|release|', ' {{ release }}')
 
     with open(rst_prep,'w') as rst:
         rst.write(text)
+
+def _markdown_header(text:str,header:str,value:str) -> str:
+    """
+    Add a yaml header to the document text.
+    """
+    if text.startswith('---\n',0,5):
+        (header,markdown) = text.split('---\n')
+        yaml = yaml.safe_load(header)
+        dct[header] = value
+
+        return '---\n' + yaml.dump(header)+'\n' + '---\n' + markdown
+    else:
+        return '---\n' + header + ': ' + value + '---\n' + text
 
 def _preprocess_rst_doc(path: str, text: str) -> str:
    """
@@ -1109,6 +1120,12 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     if code:
        # file ended with a code block
        clean += code
+
+    # add header if needed to process mkdocs extra variables
+
+    MACRO = re.compile('\{\{ .* \}\}')
+    if MACRO.search(clean):
+        clean = 'render_macros: true\n---\n' + clean
 
     with open(md_clean,'w') as markdown:
         markdown.write(clean)
