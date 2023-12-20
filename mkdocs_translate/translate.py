@@ -302,9 +302,9 @@ def _doc_location(rst_path: str, doc_link: str) -> str:
         return doc_link
     else:
         dir = os.path.dirname(rst_path)
-        link_path = os.path.join(dir, doc_link)
-        location = os.path.relpath(link_path, docs_folder)
-        return '/' + location
+        dir2 = os.path.relpath(dir, rst_folder)
+        link_path = os.path.join(dir2, doc_link)
+        return '/' + link_path
 
 
 def _label(link: str) -> str:
@@ -359,7 +359,7 @@ def _ref_path(rst_path: str, reference: str) -> str:
     logging.debug("ref: " + reference)
     ref_location = _ref_location(reference)
 
-    rst_location = os.path.relpath(os.path.dirname(rst_path), docs_folder)
+    rst_location = os.path.relpath(os.path.dirname(rst_path), rst_folder)
     if ref_location.startswith("/"):
         ref_location = ref_location[1:]
 
