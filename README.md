@@ -215,6 +215,7 @@ Pandoc:
    diff manual/docs/contributing/style-guide.md target/contributing/style-guide.md
    ``` 
 
+
 ## Configuration
 
 For core-geonetwork (or other projects following maven conventions) no configuration is required.
@@ -232,8 +233,12 @@ The file `mkdocs_translate/config.yml` file contains some settings (defaults are
    Customize if you are paying customer.
       
 * `project_folder`: "."
+   
+   Default assumes you are running from the current directory.
 
-* `rst_folder`: "docs"
+* `rst_folder`: "source"
+
+* `docs_folder`: "docs"
 
 * `build_folder`: "target"
    
@@ -258,3 +263,35 @@ The file `mkdocs_translate/config.yml` file contains some settings (defaults are
    
    Combined with ``build_folder`` to retrieve translation results (example:  `build/translate`)
    Temporary files are required for use by pandoc.
+
+* `substitutions`: dictionary of `|substitutions|` to use when converting config.py rst_epilog common substitutions.
+  
+  ``` 
+  project: GeoServer
+  author: Open Source Geospatial Foundation
+  copyright: 2023, Open Source Geospatial Foundation
+  project_copyright: 2023, Open Source Geospatial Foundation
+  ```
+  
+  Note sphinx built-in substiutions for  `|version|` and `|release|` hard coded to translate into macros.
+
+* `extlinks`: dictionary of config.py extlinks substitutions.
+   
+   To convert sphinx-build config.py:
+   
+   ```
+    extlinks = { 
+       'wiki': ('https://github.com/geoserver/geoserver/wiki/%s', None),
+       'user': ('https://docs.geoserver.org/'+branch+'/en/user/%s', None),
+       'geos': ('https://osgeo-org.atlassian.net/browse/GEOS-%s','GEOS-%s')
+    }
+   ```
+    
+   Use config.yml:
+   ```
+   extlinks:
+       wiki: https://github.com/geoserver/geoserver/wiki/%s
+       user: https://docs.geoserver.org/{{ branch }}/en/user/%s
+       geos: https://osgeo-org.atlassian.net/browse/GEOS-%s|GEOS-%s
+   ```
+  

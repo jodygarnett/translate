@@ -93,12 +93,11 @@ def init_config(override_path: str) -> None:
         raise FileNotFoundError(errno.ENOENT, f"The rst folder does not exist at location:", rst_folder)
 
     logger.debug('--- start configuration ---')
-    logger.debug('  mkdocs: %s', docs_folder)
-    logger.debug('  sphinx: %s', rst_folder)
-    logger.debug('  upload: %s', upload_folder)
-    logger.debug('download: %s', download_folder)
-    logger.debug('    docs: %s', docs_folder)
-    logger.debug(' anchors: %s', anchor_file)
+    logger.debug('docs folder: %s', docs_folder)
+    logger.debug(' rst folder: %s', rst_folder)
+    logger.debug('     upload: %s', upload_folder)
+    logger.debug('   download: %s', download_folder)
+    logger.debug('    anchors: %s', anchor_file)
     logger.debug('--- end configuration ---')
     return
 
@@ -510,17 +509,47 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
         text,
         flags=re.MULTILINE
     )
-    # rst_epilog stuff from config.py
-    # static
+
+    # static - rst_epilog stuff from config.py
     if 'substitutions' in config:
         replace: dict[str, str] = config['substitutions']
         for (key, value) in replace.items():
             text = text.replace('|' + key + '|', str(value))
-    # dynamic
+
+    # dynamic - macros
     if '|version|' in text:
         text = text.replace('|version|', ' {{ version }}')
     if '|release|' in text:
         text = text.replace('|release|', ' {{ release }}')
+
+    # external links
+    if 'extlinks' in config:
+        extlinks: dict = config['extlinks']
+        for key in extlinks.keys():
+            ext = ':'+key+':'
+
+            if ext in text:
+                definition:str = extlinks[key]
+                definition_split = definition.split('|')
+                if len(definition_split) == 2:
+                    link = definition_split[0]
+                    url = definition_split[1]
+                else:
+                    link = '%s'
+                    url = definition
+
+                # match :key:`link <url>` first
+                ext_reference = re.compile(r':' + key + r':`(.*)\s+<(.*)>`')
+                text = ext_reference.sub(
+                    lambda match: "`" + match.group(1) + " <" + url.replace(r'%s', match.group(2)) + ">`_",
+                    text
+                )
+                # match :key:`<url>` second
+                ext_reference = re.compile(r':' + key + r':`(.*)`')
+                text = ext_reference.sub(
+                    lambda match: "`" + link.replace(r'%s', match.group(1)) + " <" + url.replace(r'%s', match.group(1)) + ">`_",
+                    text
+                )
 
     with open(rst_prep, 'w') as rst:
         rst.write(text)
