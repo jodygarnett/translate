@@ -30,3 +30,4 @@ extlinks:
   geot: https://osgeo-org.atlassian.net/browse/GEOT-%s|GEOT-%s
   api: https://docs.geoserver.org/latest/en/api/#1.0.0/%s
   geotools: https://docs.geotools.org/latest/userguide/%s
+  download_release: https://sourceforge.net/projects/geoserver/files/GeoServer/{{ release }}/geoserver-{{ release }}-%s.zip|geoserver-{{ release }}-%s.zip

@@ -466,13 +466,13 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
 
     # gui-label and menuselection represented: **Cancel**
     text = re.sub(
-        r":guilabel:`(.*)`",
-        r":**\1**",
+        r":guilabel:`(.*?)`",
+        r"**\1**",
         text,
         flags=re.MULTILINE
     )
     text = re.sub(
-        r":menuselection:`(.*)`",
+        r":menuselection:`(.*?)`",
         r"**\1**",
         text,
         flags=re.MULTILINE
@@ -486,13 +486,15 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
         flags=re.MULTILINE
     )
 
-    # file path represented: **`file`**
-    text = re.sub(
-        r":file:`(.*?)`",
-        r"**`\1`**",
-        text,
-        flags=re.MULTILINE
-    )
+    # file path represented: **`path`**
+
+    if ":file:" in text:
+        file_pattern: Pattern = re.compile(r":file:`(.*?)`")
+        text = file_pattern.sub(
+            lambda match: "**`"+match.group(1)+"`**",
+            text
+        )
+
 
     # kbd represented with +++ by mkdocs
     text = re.sub(
@@ -533,27 +535,26 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
                 definition_split = definition.split('|')
                 if len(definition_split) == 2:
                     link = definition_split[0]
-                    url = definition_split[1]
+                    label = definition_split[1]
                 else:
-                    link = '%s'
-                    url = definition
+                    link = definition_split[0]
+                    label = '%s'
 
                 # match :key:`link <url>` first
-                ext_reference = re.compile(r':' + key + r':`(.*)\s+<(.*)>`')
+                ext_reference = re.compile(r':' + key + r':`(.*?)\s+<(.*?)>`')
                 text = ext_reference.sub(
-                    lambda match: "`" + match.group(1) + " <" + url.replace(r'%s', match.group(2)) + ">`_",
+                    lambda match: "`" + match.group(1) + " <" + link.replace(r'%s', match.group(2)) + ">`_",
                     text
                 )
                 # match :key:`<url>` second
-                ext_reference = re.compile(r':' + key + r':`(.*)`')
+                ext_reference = re.compile(r':' + key + r':`(.*?)`')
                 text = ext_reference.sub(
-                    lambda match: "`" + link.replace(r'%s', match.group(1)) + " <" + url.replace(r'%s', match.group(1)) + ">`_",
+                    lambda match: "`" + label.replace(r'%s', match.group(1)) + " <" + link.replace(r'%s', match.group(1)) + ">`_",
                     text
                 )
 
     with open(rst_prep, 'w') as rst:
         rst.write(text)
-
 
 def _markdown_header(text: str, header: str, value: str) -> str:
     """
@@ -1157,6 +1158,15 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
             flags=re.MULTILINE
         )
 
+        # fix windows file path duplication
+        line = re.sub(
+            r"\*\*\\`(.*?)\\`\*\*",
+            lambda match: _postprocess_file(match.group(1)),
+            line,
+            flags=re.MULTILINE
+        )
+
+
         # Pandoc escapes characters over-aggressively when writing markdown
         # https://github.com/jgm/pandoc/issues/6259
         # <, >, \, `, *, _, [, ], #
@@ -1186,14 +1196,29 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
         # file ended with a code block
         clean += code
 
+    # fix macros in URLs
+    link_pattern = re.compile(r"\[(.*?)\]\((.*?)\)",flags=re.MULTILINE)
+    clean = link_pattern.sub(
+        lambda match: '[' + match.group(1) + '](' + _postprocess_link(match.group(2)) + ')',
+        clean
+    )
     # add header if needed to process mkdocs extra variables
-    MACRO = re.compile(r'\{\{ .* \}\}')
+    MACRO = re.compile(r'\{\{ .* \}\}',flags=re.MULTILINE)
     if MACRO.search(clean):
         clean = '---\nrender_macros: true\n---\n\n' + clean
 
     with open(md_clean, 'w') as markdown:
         markdown.write(clean)
 
+def _postprocess_link(link:str) -> str:
+    link = link.replace(r'%7B%7B%20','{{ ')
+    link = link.replace(r'%20%7D%7D', ' }}')
+
+    return link
+
+def _postprocess_file(path:str) -> str:
+    path = path.replace('\\\\','\\')
+    return "**`"+path+"`**"
 
 def _postprocess_pandoc_fenced_divs(md_file: str, text: str) -> str:
     # scan document for pandoc fenced div info, warnings, ...
@@ -1325,12 +1350,12 @@ def _postprocess_pandoc_fenced_divs(md_file: str, text: str) -> str:
                 continue
 
             # unexpected
-            logger.error(md_file + ':' + str(process.count('\n')) + ' unexpected:')
-            logger.error("  admonition", admonition)
-            logger.error("  type", type)
-            logger.error("  title", title)
-            logger.error("  note", note)
-            logger.debug(process)
+            logger.error(md_file + ':' + str(process.count('\n')) + ' unexpected ' + str(type) + ':' + str(title))
+            # logger.debug("  admonition", admonition)
+            # logger.debug("  type", type)
+            # logger.debug("  title", title)
+            # logger.debug("  note", note)
+            # logger.debug(process)
             raise ValueError('unclear what to process ' + str(type) + " " + str(title) + "\n" + md_file)
 
         else:
