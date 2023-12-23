@@ -449,6 +449,7 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
 
     text = _preprocess_rst_block_directive(rst_file, text, 'only', _block_directive_only)
     text = _preprocess_rst_block_directive(rst_file, text, 'include', _block_directive_include)
+    text = _preprocess_rst_block_directive(rst_file, text, 'literalinclude', _block_directive_literalinclude)
     text = _preprocess_rst_block_directive(rst_file, text, 'parsed-literal', _block_directive_parsed_literal)
     text = _preprocess_rst_block_directive(rst_file, text, 'figure', _block_directive_figure)
 
@@ -496,10 +497,11 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
         )
 
 
-    # kbd represented with +++ by mkdocs
+    # kbd input represented with as literal text in by mkdocs
+    # physical keys represented with +++ctrl+alt+del++
     text = re.sub(
         r":kbd:`(.*?)`",
-        r"+++\1+++",
+        r"`\1`",
         text,
         flags=re.MULTILINE
     )
@@ -609,14 +611,14 @@ def _preprocess_rst_ref(path: str, text: str) -> str:
     """
     # ref links processed in order from most to least complicated
     # :ref:`normal <link>`
-    named_reference = re.compile(r":ref:`(.*) <((\w|-)*)>`")
+    named_reference = re.compile(r":ref:`(.*?) <((\w|-)*)>`")
     text = named_reference.sub(
         lambda match: "`" + match.group(1) + " <" + _ref_path(path, match.group(2)) + ">`_",
         text
     )
 
     # :ref:`simple`
-    simple_reference = re.compile(r":ref:`((\w|-)*)\`")
+    simple_reference = re.compile(r":ref:`((\w|-)*?)\`")
     text = simple_reference.sub(
         lambda match: "`" + _ref_title(match.group(1)) + " <" + _ref_path(path, match.group(1)) + ">`_",
         text
@@ -826,10 +828,57 @@ def _block_directive_include(path: str, value: str, arguments: dict[str, str], b
         start = arguments['start-after']
         raw += indent + '      start="' + start + '"\n'
     if 'end-before' in arguments:
-        start = arguments['end-before']
-        raw += indent + '      end="' + start + '"\n'
+        end = arguments['end-before']
+        raw += indent + '      end="' + end + '"\n'
 
     raw += indent + '   %}\n'
+
+    return raw
+
+def _block_directive_literalinclude(path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
+    """
+    Called by _preprocess_rst_block_directive to convert sphinx directive to raw markdown code block.
+    """
+    relative_path = value.strip();
+
+    if relative_path[0:1] == '/':
+        relative_path = relative_path[1:]
+        for _ in range(path.count('/') - 1):
+            relative_path = '../' + relative_path
+    else:
+        if relative_path[0:1] != '.' and '/' in relative_path:
+            relative_path = './' + relative_path
+
+    if 'language' in arguments:
+        pygments = arguments['language']
+    else:
+        pygments = ''
+
+    raw =  indent + '.. code-block:: raw_markdown\n'
+    raw += indent + '   \n'
+    raw += indent + '   ~~~' + pygments + '\n'
+    raw += indent + '   {% \n'
+    raw += indent + '     include "' + relative_path + '"\n'
+
+    if 'start-line' in arguments:
+        logging.warning(
+            'literalinclude ' + value + ' directive: start-line option ignored, change rst to start-after which is supported')
+    if 'end-line' in arguments:
+        logging.warning(
+            'literalinclude ' + value + ' directive: end-line option ignored, change rst tp end-before option which is supported')
+
+    if block:
+        logging.warning('literalinclude ' + value + ' directive: invalid use of directive block content')
+
+    if 'start-after' in arguments:
+        start = arguments['start-after']
+        raw += indent + '      start="' + start + '"\n'
+    if 'end-before' in arguments:
+        end = arguments['end-before']
+        raw += indent + '      end="' + end + '"\n'
+
+    raw += indent + '   %}\n'
+    raw += indent + '   ~~~\n'
 
     return raw
 
@@ -1111,7 +1160,7 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     if "{.title-ref}" in text:
         # some strange thing where `TEXT` is taken to be a wiki link
         text = re.sub(
-            r"\[(.*?)\]{\.title-ref}",
+            r"\[([^\]]+)]{\.title-ref}",
             r"``\1``",
             text,
             flags=re.MULTILINE
