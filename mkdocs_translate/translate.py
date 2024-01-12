@@ -328,9 +328,12 @@ def _ref_title(reference: str) -> str:
     :return: title for reference
     """
     title_lookup = reference + ".title"
+    title_lookup2 = reference.lower() + ".title"
 
     if title_lookup in anchors:
         return anchors[title_lookup]
+    if title_lookup2 in anchors:
+        return anchors[title_lookup2]
     else:
         label = _label(reference)
         logger.warning("broken reference '" + reference + "' title:" + label)
@@ -345,6 +348,8 @@ def _ref_location(reference: str) -> str:
     """
     if reference in anchors:
         return anchors[reference]
+    if reference.lower() in anchors:
+        return anchors[reference.lower()]
     else:
         link = reference + "-broken.rst"
         logger.warning("broken reference '" + reference + "' link:" + link)
@@ -452,6 +457,9 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
     text = _preprocess_rst_block_directive(rst_file, text, 'literalinclude', _block_directive_literalinclude)
     text = _preprocess_rst_block_directive(rst_file, text, 'parsed-literal', _block_directive_parsed_literal)
     text = _preprocess_rst_block_directive(rst_file, text, 'figure', _block_directive_figure)
+
+    if ':doc:' in text:
+        text = _preprocess_rst_doc(rst_file, text)
 
     if ':ref:' in text:
         text = _preprocess_rst_ref(rst_file, text)
@@ -571,8 +579,8 @@ def _markdown_header(text: str, header: str, value: str) -> str:
     else:
         return '---\n' + header + ': ' + value + '---\n' + text
 
-
 def _preprocess_rst_doc(path: str, text: str) -> str:
+
     """
     Preprocess rst content replacing doc references with links.
     """
@@ -632,28 +640,33 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
     scan document for toctree directives to process
     """
     toctree = None
+    hidden = False
     process = ''
     for line in text.splitlines():
-        if '.. toctree::' == line:
+        if line.startswith('.. toctree::'):
             # directive started
             toctree = ''
+            hidden = False
             continue
 
         if toctree != None:
             if len(line.strip()) == 0:
                 continue
             if line.strip()[0:1] == ':':
+                hidden = True
                 continue
-            if line[0:3] == '   ':
+            if line.startswith('   '):
                 # processing directive
                 link = line.strip().replace(".rst", "")
                 label = _doc_title(path, link)
                 toctree += f"* `{label} <{link}.rst>`_\n"
             else:
                 # end directive
-                process += toctree + '\n'
+                if not hidden:
+                    process += toctree + '\n'
                 process += line + '\n'
                 toctree = None
+                hidden = False
         else:
             process += line + '\n'
 
