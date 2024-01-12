@@ -456,14 +456,14 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
     if ':ref:' in text:
         text = _preprocess_rst_ref(rst_file, text)
 
-    #    if '.. figure::' in text:
-    #        text = _preprocess_rst_figure(rst_file,text)
-
     # strip unsupported things
     if '.. index::' in text:
         text = _preprocess_rst_strip(rst_file, text, 'index')
     if '.. contents::' in text:
         text = _preprocess_rst_strip(rst_file, text, 'contents')
+    if text.startswith('.. _'):
+        text = text.split('\n',2
+                          )[2]
 
     # gui-label and menuselection represented: **Cancel**
     text = re.sub(
@@ -648,7 +648,7 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
                 # processing directive
                 link = line.strip().replace(".rst", "")
                 label = _doc_title(path, link)
-                toctree += f"* `{label} <{link}.rst>`__\n"
+                toctree += f"* `{label} <{link}.rst>`_\n"
             else:
                 # end directive
                 process += toctree + '\n'
@@ -729,6 +729,8 @@ def _block_directive_figure(path: str, value: str, arguments: dict[str, str], bl
             for line in legend.split('\n'):
                 raw += indent + '   ' + line + '\n'
 
+        raw += indent + '\n'
+
     return raw
 
     raw += indent + '      include-markdown "' + relative_path + '"\n'
@@ -777,7 +779,7 @@ def _block_directive_parsed_literal(path: str, value: str, arguments: dict[str, 
     return simplified
 
 
-def _block_directive_only(path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
+def _block_directive_only(path: str, value: str, arguments: dict[str, str], content: str, indent: str) -> str:
     """
     Process only directive into admonition directive to simplify processing for pandoc.
     Special case using snapshot for nightly build.
@@ -792,12 +794,15 @@ def _block_directive_only(path: str, value: str, arguments: dict[str, str], bloc
     admonition = admonition.title()
 
     simplified = indent + '.. admonition:: ' + admonition + '\n'
-    simplified += indent + '\n'
-    if block:
-        for line in block.splitlines():
-            simplified += indent + '   ' + line + '\n'
+    if content:
+        # blank line to separate content
+        simplified += indent + '   \n'
+        for line in content.splitlines():
+            simplified += indent + line + '\n'
 
-    return simplified + '\n'
+    # blank line to end directive
+    simplified += indent + '\n'
+    return simplified
 
 
 def _block_directive_include(path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
@@ -888,6 +893,14 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str,
     """
     Scan document for sphinx-build block directive, delegating to directive_processing callable.
 
+    Please enjoy the following ascii art!
+
+       .. <directive>: <directive_value>
+       -3-<directive_argument>:<directive_argument_value>*
+       -bank-
+       -indent-<directive_content>*
+       -bank-
+
     returns processed text
     """
     if '.. ' + directive + '::' not in text:
@@ -905,20 +918,23 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str,
 
     directive_raw = None
     indent = None  # indent while capturing
+    state = 'scan'
 
     directive_output = None  # directive output
 
     # processed text
     process = ''
-    logging.debug("preprocessing " + directive + ": " + path)
+    logger.debug("preprocessing " + directive + ": " + path)
     for line in text.splitlines():
-        logging.debug('processing:' + line)
+        logger.debug('processing ' + state +':' + line)
         blank = len(line.strip()) == 0
 
         if directive_raw == None:
+            state = "scan"
             match = re.search(r"^(\s*)\.\. " + directive + "::(.*)$", line)
             if match:
                 # directive started
+                state = "directive"
                 directive_raw = line + '\n'
 
                 indent = match.group(1)
@@ -926,33 +942,41 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str,
                 directive_content = None
                 directive_arguments = {}
 
-                logging.debug("    " + directive + ": " + directive_value)
+                logger.debug("    " + directive + ": " + directive_value)
                 continue
             else:
                 # logging.debug('      scan:'+line)
                 process += line + '\n'
                 continue
         else:
+            # replace tabs with three spaces for consistent indent calculation
+            line = line.replace("\t","   ")
+
             indented = len(line) - len(line.lstrip())
             if blank and directive_content is None:
-                logging.debug('     blank:' + line)
+                state = "content"
+                logger.debug('     blank:' + line)
                 # capture content next
                 directive_raw += line + '\n'
                 directive_content = ''
                 continue
             elif line[indented:indented + 1] == ':' and directive_content is None:
-                logging.debug('   process:' + line)
+                state = "argument"
+                logger.debug('   process:' + line)
                 # capture arguments
                 directive_raw += line + '\n'
                 (ignore, option, value) = line.split(':', 2)
-                logging.debug("      " + option + '="' + value + '"')
+                logger.debug("      " + option + '="' + value + '"')
                 directive_arguments[option] = value.lstrip()
                 continue
             elif indented > len(indent):
-                # directive content
+                # procssing directive content
                 directive_raw += line + '\n'
-                content = line.strip()
-                logging.debug('   content:' + content)
+                if blank:
+                    content = indent
+                else:
+                    content = line[len(indent):]
+                logger.debug('   content:' + content)
 
                 if directive_content is None or directive_content == '':
                     directive_content = content
@@ -961,14 +985,17 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str,
 
                 continue
             else:
+                state = "done"
                 # end directive
                 directive_output = directive_processing(path, directive_value, directive_arguments, directive_content,
                                                         indent)
                 process += directive_output
 
+                state = "scan"
                 # process current line
                 match = re.search(r"^(\s*)\.\. " + directive + "::(.*)$", line)
                 if match:
+                    state = "directive"
                     # directive started
                     directive_raw = line + '\n'
                     indent = match.group(1)
@@ -976,9 +1003,10 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str,
                     directive_content = None
                     directive_arguments = {}
 
-                    logging.debug("    " + directive + ": " + directive_value)
+                    logger.debug("    " + directive + ": " + directive_value)
                     continue
                 else:
+                    state = "scan"
                     process += line + '\n'
 
                     # reset state for scanning
@@ -993,113 +1021,15 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str,
     # reached the end of the text content
     # check if we we were in the middle of processing directive
     if directive_raw != None:
+        state = "done"
         # end directive at end of file
-        logging.debug("      rst:\n" + directive_raw)
+        logger.debug("      rst:\n" + directive_raw)
         directive_output = directive_processing(path, directive_value, directive_arguments, directive_content, indent)
-        logging.debug("      out:\n" + directive_output)
+        logger.debug("      out:\n" + directive_output)
 
         process += directive_output + '\n'
 
     return process
-
-
-# def _preprocess_rst_figure(path: str, text: str) -> str:
-#    """
-#    scan document for figure directive
-#    """
-#    block = None
-#
-#    indent = None  # indent while capturing
-#    arguments = None # arguments while capturing
-#    content = None # content while capturing
-#    figure = None  # simplified
-#
-#    # processed text
-#    process = ''
-#    logging.debug("preprocessing figure: "+path)
-#    for line in text.splitlines():
-#        # logging.debug('processing:'+line)
-#        blank = len(line.strip()) == 0
-#        if block == None:
-#           match = re.search(r"^(\s*)\.\. figure::\s*((\w|-|\.)*)$", line)
-#           if match:
-#              # figure directive started
-#              block = line + '\n'
-#              indent = match.group(1)
-#              image = match.group(2)
-#
-#              content = None
-#              arguments = {}
-#              figure = indent + '.. image:: '+image+'\n'
-#
-#              logging.debug("    figure: " + image)
-#              continue
-#           else:
-#              # logging.debug('      scan:'+line)
-#              process += line + '\n'
-#              continue
-#        else:
-#           indented = len(line) - len(line.lstrip())
-#           if blank and content == None:
-#              logging.debug('     blank:'+line)
-#              # capture content next
-#              block += line + '\n'
-#              content = ''
-#              continue
-#           elif line.strip()[indented:1] == ':' and content == None:
-#              logging.debug('   process:'+line)
-#              # capture arguments
-#              block += line + '\n'
-#              (ignore,option,value) = line.split(':',2)
-#              logging.debug("      "+option+'='+value)
-#              arguments[option] = value
-#              continue
-#           elif indented > len(indent):
-#              # directive content
-#              block += line + '\n'
-#
-#              if content == '':
-#                  logging.debug('   caption:'+line)
-#                  caption = line.strip()
-#                  print(caption, caption[0], caption[-1])
-#                  if caption[0] == '*' and caption[-1] == '*':
-#                      content = indent + caption
-#                  else:
-#                      content = indent + '*'+caption+'*'
-#              else:
-#                  logging.debug('   legend:'+line)
-#                  content += '\n'+indent+line.strip()
-#              # figure += indent + line.strip() + '\n'
-#              continue
-#           else:
-#              logging.debug('      done:'+line)
-#              # end directive
-#              if arguments:
-#                  logging.debug('      arguments:'+str(arguments))
-#              if content:
-#                  logging.debug('      content:'+content)
-#
-#              logging.debug("rst figure:\n"+block)
-#              logging.debug("rst image:\n"+figure)
-#              process += figure
-#              if content:
-#                  process += content + '\n'
-#
-#              process += '\n' + line + '\n'
-#              block = None
-#              figure = None
-#              indent = None
-#              arguments = None
-#              content = None
-#              continue
-#
-#    if block != None:
-#       # end directive at end of file
-#       logging.debug("rst figure:\n"+block)
-#       logging.debug("markdown image:]m"+figure)
-#       process += figure + '\n'
-#
-#    return process
 
 def _preprocess_rst_strip(path: str, text: str, directive: str) -> str:
     """
@@ -1153,10 +1083,6 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     with open(md_file, 'r') as markdown:
         text = markdown.read()
 
-    # process pandoc ::: adominitions to mkdocs representation
-    if ':::' in text:
-        text = _postprocess_pandoc_fenced_divs(md_file, text)
-
     if "{.title-ref}" in text:
         # some strange thing where `TEXT` is taken to be a wiki link
         text = re.sub(
@@ -1200,12 +1126,13 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
 
         # non-code clean content
         # fix rst#anchor -> md links#anchor
-        line = re.sub(
-            r"\[(.+?)\]\(((\w|-|/|\.)*)\.rst(#.*?)?\)",
-            r"[\1](\2.md\4)",
-            line,
-            flags=re.MULTILINE
-        )
+        if ".rst)" in line:
+            line = re.sub(
+                r"\[(.+?)\]\(((\w|-|/|\.)*)\.rst(#.*?)?\)",
+                r"[\1](\2.md\4)",
+                line,
+                flags=re.MULTILINE
+            )
 
         # fix windows file path duplication
         line = re.sub(
@@ -1215,10 +1142,10 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
             flags=re.MULTILINE
         )
 
-
         # Pandoc escapes characters over-aggressively when writing markdown
         # https://github.com/jgm/pandoc/issues/6259
         # <, >, \, `, *, _, [, ], #
+
         line = line.replace(r'**\`', '**`')
         line = line.replace(r'\`**', '`**')
         line = line.replace(r'\<', '<')
@@ -1251,6 +1178,11 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
         lambda match: '[' + match.group(1) + '](' + _postprocess_link(match.group(2)) + ')',
         clean
     )
+
+    # process pandoc ::: adominitions to mkdocs representation
+    if ':::' in clean:
+        clean = _postprocess_pandoc_fenced_divs(md_file, clean)
+
     # add header if needed to process mkdocs extra variables
     MACRO = re.compile(r'\{\{ .* \}\}',flags=re.MULTILINE)
     if MACRO.search(clean):
@@ -1269,108 +1201,162 @@ def _postprocess_file(path:str) -> str:
     path = path.replace('\\\\','\\')
     return "**`"+path+"`**"
 
+def _fenced_div_to_mkdocs(type:str) -> (str,str):
+    """
+    Use sphinx-build admonition mappings to mkdocs
+    """
+    # https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#rst-directives
+    if type == 'attention':
+        return ('info',None)
+    if type == 'caution':
+        return ('warning',None)
+    if type == 'danger':
+        return ('danger',None)
+    if type == 'error':
+        return ('failure',None)
+    if type == 'hint':
+        return ('tip',None)
+    if type == 'important':
+        return ('info',None)
+    if type == 'note':
+        return ('note',None)
+    if type == 'tip':
+        return ('tip',None)
+    if type == 'warning':
+        return ('warning',None)
+
+    # sphinx-build directives mapping to fenced blogs
+    # https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html
+    # title is supplied, scanning for note next
+    if type == 'todo':
+        return ('info','Todo')
+    if type == 'admonition':
+        return ('abstract',None)
+    if type == 'deprecated':
+        return ('warning','Deprecated')
+    if type == 'seealso':
+        return ('info','See Also')
+    if type == 'versionadded':
+        return ('info','Version Added')
+    if type == 'versionchanged':
+        return ('info','Version Changed')
+    if type == 'versionchanged':
+        return ('info','Version Changed')
+
+    return (type,None)
+
 def _postprocess_pandoc_fenced_divs(md_file: str, text: str) -> str:
+    """
+    Pandoc has a markdown convention for notes, warnings, and info admonitions:
+
+        ::: admonition
+        title
+
+        content
+        :::
+
+    div_start -> title -> blank -> content -> div
+
+    And also:
+
+        ::: note
+        ::: title
+        Note
+        :::
+        content
+        :::
+
+    div_start -> div_title -> title -> blank -> content -> div
+
+    Process markdown to use the mkdocs convention instead.
+    """
     # scan document for pandoc fenced div info, warnings, ...
     admonition = False
+    admonition_title = False
     type = None
-    ident = ''
+    indent = ''
     title = None
     note = None
     process = ''
+    state = "scan"
     for line in text.splitlines():
-        match = re.search(r"^(\s*):::\s*(\w*)$", line)
-        if match and admonition == False:
-            # admonition started
-            # https://squidfunk.github.io/mkdocs-material/reference/admonitions/
-            admonition = True
-            indent = match.group(1)
-            type = match.group(2)
+        logger.debug('processing ' + state + ':' + line)
+        blank = len(line.strip()) == 0
 
-            # sphinx-build admonition mappings
-            # https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#rst-directives
-            if type == 'attention':
-                type = 'info'
-            if type == 'caution':
-                type = 'warning'
-            if type == 'danger':
-                type = 'danger'
-            if type == 'error':
-                type = 'failure'
-            if type == 'hint':
-                type = 'tip'
-            if type == 'important':
-                type = 'info'
-            if type == 'note':
-                type = 'note'
-            if type == 'tip':
-                type = 'tip'
-            if type == 'warning':
-                type = 'warning'
+        if not admonition:
+            # scanning content looking for fenced div start
+            fence_open = re.search(r"^(\s*):::\s*(\w*)$", line)
+            if not fence_open:
+                process += line + '\n'
+                continue
+            else:
+                # admonition started
+                admonition = True
+                admonition_title = False
+                indent = fence_open.group(1)
+                fence_type = fence_open.group(2)
 
-            # sphinx-build directives mapping to fenced blogs
-            # https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html
-            if type == 'todo':
-                type = 'info'
-                title = 'Todo'
-                note = ''
-            if type == 'admonition':
-                type = 'abstract'
-                title = ''
+                (type,title) = _fenced_div_to_mkdocs(fence_type)
 
-            if type == 'deprecated':
-                type = 'warning'
-                title = 'Deprecated'
-                note = ''
-            if type == 'seealso':
-                type = 'info'
-                title = 'See Also'
-                note = ''
-            if type == 'versionadded':
-                type = 'info'
-                title = 'Version Added'
-                note = ''
-            if type == 'versionchanged':
-                type = 'info'
-                title = 'Version Changed'
-                note = ''
-            if type == 'versionchanged':
-                type = 'info'
-                title = 'Version Changed'
-                note = ''
-            log("process:'" + line + "'")
-            log('start:', type, " title:", title)
-            continue
+                if title is None:
+                    # expect title next (with or without optional divs markers)
+                    state = 'title'
+                    title = None
+                    note = None
+                else:
+                    # title provided, expect note content next
+                    note = ''
+                    state = 'note'
 
-        if admonition:
-            # processing fenced div
-            log("process:'" + line + "'")
-
-            if match and match.group(2) == 'title':
-                # start title processing, next line title
-                title = ''
-                log("start title")
+                logger.debug("process:'" + line + "'")
+                logger.debug('start:', type, " title:", title)
                 continue
 
-            if title == '':
+        else:
+            # processing admonition / fenced div
+            logger.debug("process:'" + line + "'")
+
+            fence_title = re.search(r"^(\s*):::\s*title\s*$", line)
+            if fence_title:
+                # start title processing, next line title
+                state = "div_title"
+                admonition_title = True
+
+                title = None
+                logger.debug("start title")
+                continue
+
+            if not blank and title is None:
                 title = line.strip()  # title obtained
-                log("title", title)
-                if type == 'abstract':
-                    # .. admonition:: Explore does not use seperate ::: marker between title and note
+                logger.debug("title", title)
+
+                if admonition_title:
+                    state = "div_title_end"
+                else:
+                    # resume processing for note
+                    state = "note"
                     note = ''
                 continue
 
-            if match and note == None:
-                # start note processing, next content is note
+            # scanning admonition for fence title break / close
+            fence = re.search(r"^(\s*):::\s*$", line)
+
+            if fence and admonition_title:
+                # expected fence break to end div_title
+                admonition_title = False
+                # start processing for note
+                state = "note"
                 note = ''
-                log("start note")
+                logger.debug("start note")
                 continue
 
-            if match:
+            if fence:
+                state = "done"
                 # processing fenced div
-                log("fenced div")
-                log("  type:", type)
-                log("  title:", title)
-                log("  note:", note)
+                logger.debug("fenced div")
+                logger.debug("  type:", type)
+                logger.debug("  title:", title)
+                logger.debug("  note:", note)
 
                 process += indent + '!!! ' + type
 
@@ -1381,34 +1367,33 @@ def _postprocess_pandoc_fenced_divs(md_file: str, text: str) -> str:
                 for content in note.splitlines():
                     process += '    ' + content + '\n'
 
-                process += "\n"
+                # process += "\n"
 
+                state = "scan"
                 admonition = False
+                admonition_title = False
                 type = None
-                ident = ''
+                indent = ''
                 title = None
                 note = None
                 continue
 
-            if note != None:
-                if note == '' and line.strip() == '':
+            if note is not None:
+                if note == '' and blank:
                     # skip initial blank line
                     continue
                 note += line + '\n'
-                log("note:" + line)
+                logger.debug("note:" + line)
                 continue
-
-            # unexpected
-            logger.error(md_file + ':' + str(process.count('\n')) + ' unexpected ' + str(type) + ':' + str(title))
-            # logger.debug("  admonition", admonition)
-            # logger.debug("  type", type)
-            # logger.debug("  title", title)
-            # logger.debug("  note", note)
-            # logger.debug(process)
-            raise ValueError('unclear what to process ' + str(type) + " " + str(title) + "\n" + md_file)
-
-        else:
-            process += line + '\n'
+            else:
+                # unexpected
+                logger.error(md_file + ':' + str(process.count('\n')) + ' unexpected ' + str(type) + ':' + str(title))
+                logger.debug("  admonition", admonition)
+                logger.debug("  type", type)
+                logger.debug("  title", title)
+                logger.debug("  note", note)
+                logger.debug(process)
+                raise ValueError('pandoc markdown fenced div unclear ' + str(type) + " " + str(title) + "\n" + md_file + ':' + str(process.count('\n')))
 
     if admonition:
         # fenced div was at end of file
@@ -1419,17 +1404,9 @@ def _postprocess_pandoc_fenced_divs(md_file: str, text: str) -> str:
         logger.error("  note", note)
         logger.debug(process)
         raise ValueError(
-            'Expected ::: to end fence dive ' + str(type) + ' ' + str(title) + ' ' + str(note) + "\n" + md_file)
+            'Expected ::: to end fence dive ' + str(type) + ' ' + str(title) + ' ' + str(note) + "\n" + md_file + ':' + str(process.count('\n')))
 
     return process
-
-
-def log(*args):
-    if False:
-        message = ''
-        for value in args:
-            message += str(value) + ' '
-        print(message)
 
 
 def convert_markdown(md_file: str) -> str:
@@ -1654,21 +1631,6 @@ def postprocess_markdown(md_file: str, md_clean: str):
     with open(md_file, 'r') as markdown:
         data = markdown.read()
 
-    # Fix image captions
-    #
-    #     ![Search field](img/search.png) *Champ de recherche*
-    #
-    # Clean:
-    #
-    #    ![Search field](img/search.png)
-    #    *Champ de recherche*
-    #
-    #     data = re.sub(
-    #         r"^(\s*)\!\[(.*)\]\((.*)\)\s\*(.*)\*$",
-    #         r"\1![\2](\3)\1*\4*",
-    #         data,
-    #         flags=re.MULTILINE
-    #     )
     # fix icons
     data = re.sub(
         r":(fontawesome-\S*)\s:",
