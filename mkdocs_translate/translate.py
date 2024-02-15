@@ -74,15 +74,15 @@ def init_config(override_path: str) -> None:
 
     config = load_config(override_path)
 
-    docs_folder = os.path.join(config['project_folder'], config['docs_folder'])
-    upload_folder = os.path.join(config['project_folder'], config['build_folder'], config['upload_folder'])
-    convert_folder = os.path.join(config['project_folder'], config['build_folder'], config['convert_folder'])
-    download_folder = os.path.join(config['project_folder'], config['build_folder'], config['download_folder'])
-    anchor_file = os.path.join(docs_folder, config['anchor_file'])
+    docs_folder = os.path.normpath(os.path.join(config['project_folder'], config['docs_folder']))
+    upload_folder = os.path.normpath(os.path.join(config['project_folder'], config['build_folder'], config['upload_folder']))
+    convert_folder = os.path.normpath(os.path.join(config['project_folder'], config['build_folder'], config['convert_folder']))
+    download_folder = os.path.normpath(os.path.join(config['project_folder'], config['build_folder'], config['download_folder']))
+    anchor_file = os.path.normpath(os.path.join(docs_folder, config['anchor_file']))
 
     rst_folder = docs_folder
     if 'rst_folder' in config:
-        rst_folder = os.path.join(config['project_folder'], config['rst_folder'])
+        rst_folder = os.path.normpath(os.path.join(config['project_folder'], config['rst_folder']))
 
     if not os.path.exists(docs_folder):
         logger.debug(f"The docs folder does not exist at location: {docs_folder}")
@@ -157,19 +157,18 @@ def collect_paths(paths: list[str], extension: str) -> list[str]:
 
     return files
 
-
 #
-# RST INDEX MANAGEMENT AND USE
+# RST SCAN DOC AND REF
 #
-def index_rst(base_path: str, rst_file: str) -> str:
+def scan_index_rst(base_path: str, rst_file: str) -> str:
     """
-    Scan through rst_file producing doc and ref indexs
+    Scan through rst_file for doc and ref directives to produce an index
     """
     if not os.path.exists(base_path):
         raise FileNotFoundError(errno.ENOENT, f"RST base_path does not exist at location: {base_path}")
 
     common_path = os.path.commonpath([base_path, rst_file])
-    if common_path != base_path:
+    if not common_path:
         raise FileNotFoundError(errno.ENOENT, f"RST base_path '{base_path}' does not contain rst_file: '{rst_file}'")
 
     with open(rst_file, 'r') as file:
@@ -212,7 +211,7 @@ def index_rst(base_path: str, rst_file: str) -> str:
                 index += doc + '.title=' + heading + "\n"
                 doc = None
 
-        match = re.search(r"^.. _((\w|.|-)*):$", line)
+        match = re.search(r"^.. _((\w|.|-)*):(\s)*$", line)
         if match:
             if ref:
                 logging.warning("reference " + ref + " defined without a heading, skipped")
@@ -283,7 +282,7 @@ def _doc_title(rst_path: str, doc_link: str) -> str:
         return anchors[title_key]
     else:
         label = _label(doc_link)
-        logger.warning("broken doc '" + doc_link + "' title:" + label)
+        logger.warning(rst_path + ": broken doc '" + doc_link + "' title:" + label)
         return label
 
 
@@ -375,6 +374,73 @@ def _ref_path(rst_path: str, reference: str) -> str:
     logging.debug("    relative: " + link)
     return link
 
+#
+# DOWNLOAD SCAN
+#
+def scan_download_rst(base_path: str, rst_file: str) -> set[str]:
+    """
+    Scan through rst_file for download directives to produce an download.properties list
+    """
+    if not os.path.exists(base_path):
+        raise FileNotFoundError(errno.ENOENT, f"RST base_path does not exist at location: {base_path}")
+
+    common_path = os.path.commonpath([base_path, rst_file])
+    if not common_path:
+        raise FileNotFoundError(errno.ENOENT, f"RST base_path '{base_path}' does not contain rst_file: '{rst_file}'")
+
+    with open(rst_file, 'r') as file:
+        text = file.read()
+
+    relative_path = rst_file[len(base_path):]
+    doc = relative_path
+    downloads: set[str] = set()
+
+    with open(rst_file, 'r') as file:
+        text = file.read()
+
+    # download links processed in order from most to least complicated
+    # :download:`normal <link>`
+    named_download = re.compile(r":download:`(.*?) <((\w|-|_|/|\.)*?)>`")
+    for match in named_download.finditer( text ):
+        downloads.add(match[2])
+
+    # :download:`simple`
+    simple_reference = re.compile(r":download:`((\w|-|_|/|\.)*?)`")
+    for match in simple_reference.finditer( text ):
+        downloads.add(match[1])
+
+    # only index external downloads
+    external_downloads: set[str] = set()
+    path = os.path.dirname(rst_file)
+    for download in downloads:
+        if download[0:1] == '/':
+            # sphinx-build leading slash indicates root of source folder
+            download = download[1:]
+            for _ in range(path.count('/') - 1):
+                download = '../' + download
+
+        if (path.count('/') < download.count('../')):
+            # external download link, copy required
+            download = '../../' + download
+            external_downloads.add(download)
+
+    return external_downloads
+
+def _download_path(path: str, download: str) -> str:
+    """
+    Generate a relative link, or download folder for external content.
+    """
+    reference = download
+    if reference[0:1] == '/':
+        # sphinx-build leading slash indicates root of source folder
+        reference = reference[1:]
+        for _ in range(path.count('/') - 1):
+            reference = '../' + reference
+
+    if (path.count('/') < reference.count('../')):
+        return os.path.join("download",os.path.basename(download))
+    else:
+        return reference
 
 #
 # RST PANDOC CONVERSION
@@ -394,11 +460,8 @@ def convert_rst(rst_file: str) -> str:
     # file we are generating
     md_file = rst_file.replace(".rst", ".md").replace(".txt", ".md")
 
-    if md_file.startswith(rst_folder):
-        md_file = md_file.replace(rst_folder, docs_folder)
-
-    if 'rst_folder' in config and 'docs_folder' in config and config['rst_folder'] != config['docs_folder']:
-        md_file = md_file.replace(config['rst_folder'], config['docs_folder'])
+    if md_file.startswith(rst_folder) and rst_folder != docs_folder:
+        md_file = md_file.replace(rst_folder, docs_folder, 1)
 
     # temp file for processing
     md_tmp_file = re.sub("^" + config['rst_folder'] + "/", convert_folder + '/', rst_file)
@@ -433,6 +496,11 @@ def convert_rst(rst_file: str) -> str:
     if not os.path.exists(md_tmp_file):
         raise FileNotFoundError(errno.ENOENT, f"Pandoc did not create md file:", md_tmp_file)
 
+    md_dir = os.path.dirname(md_file)
+    if not os.path.exists(md_dir):
+        print("mkdocs markdown directory:", md_dir)
+        os.makedirs(md_dir)
+
     logging.debug("Preprocessing '" + md_tmp_file + "' to '" + md_file + "'")
     postprocess_rst_markdown(md_tmp_file, md_file)
     if not os.path.exists(md_file):
@@ -458,11 +526,15 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
     text = _preprocess_rst_block_directive(rst_file, text, 'parsed-literal', _block_directive_parsed_literal)
     text = _preprocess_rst_block_directive(rst_file, text, 'figure', _block_directive_figure)
 
+    # process some things into url links
     if ':doc:' in text:
         text = _preprocess_rst_doc(rst_file, text)
 
     if ':ref:' in text:
         text = _preprocess_rst_ref(rst_file, text)
+
+    if ':download:' in text:
+        text = _preprocess_rst_download(rst_file, text)
 
     # strip unsupported things
     if '.. index::' in text:
@@ -579,6 +651,31 @@ def _markdown_header(text: str, header: str, value: str) -> str:
     else:
         return '---\n' + header + ': ' + value + '---\n' + text
 
+def _preprocess_rst_download(path:str, text:str) -> str:
+    """
+    Preprocess rst content replacing download references with links:
+
+    relative download links within mkdocs folder should work.
+
+    relative download links external to docs folder should go to source code,
+    which we will need to copy into a downloads folder.
+    """
+    # download links processed in order from most to least complicated
+    # :download:`normal <link>`
+    named_download = re.compile(r":download:`(.*?) <((\w|-|_|/|\.)*?)>`")
+    text = named_download.sub(
+        lambda match: "`" + match.group(1) + " <" + _download_path( path, match.group(2)) + ">`__",
+        text
+    )
+
+    # :download:`simple`
+    simple_reference = re.compile(r":download:`((\w|-|_|/|\.)*?)`")
+    text = simple_reference.sub(
+        lambda match: "`" + os.path.basename(match.group(1)) + " <" + _download_path(path, match.group(1)) + ">`__",
+        text
+    )
+    return text
+
 def _preprocess_rst_doc(path: str, text: str) -> str:
 
     """
@@ -653,7 +750,8 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
             if len(line.strip()) == 0:
                 continue
             if line.strip()[0:1] == ':':
-                hidden = True
+                if line.strip()[0:1] == ':hidden:':
+                    hidden = True
                 continue
             if line.startswith('   '):
                 # processing directive
@@ -672,7 +770,8 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
 
     if toctree != None:
         # end directive at end of file
-        process += toctree
+        if not hidden:
+            process += toctree + '\n'
 
     return process
 
@@ -729,10 +828,11 @@ def _block_directive_figure(path: str, value: str, arguments: dict[str, str], bl
                     else:
                         caption += line + '\n'
 
-        if caption[0:1] != '*' and caption[-1:] != '*':
-            caption = '*' + caption + '*'
 
         if caption:
+            if caption[0:1] != '*' and caption[-1:] != '*':
+                caption = '*' + caption + '*'
+
             for line in caption.split('\n'):
                 raw += indent + '   ' + line + '\n'
 
@@ -822,12 +922,17 @@ def _block_directive_include(path: str, value: str, arguments: dict[str, str], b
     """
     Called by _preprocess_rst_block_directive to convert sphinx directive to raw markdown code block.
     """
-    relative_path = value.strip();
+    relative_path = value.strip()
 
+    # include-markdown-plugin supports `path/file.ext` as relative to the docs/ folder. however we force relative
+    # path use, to allow each doc page to be used as part of a mkdocs-monorepo-plugin build
     if relative_path[0:1] == '/':
         relative_path = relative_path[1:]
         for _ in range(path.count('/') - 1):
             relative_path = '../' + relative_path
+    elif relative_path[0:2] != './':
+        # include-markdown-plugin requires relative paths to start with ./ or ../
+        relative_path = './' + relative_path
 
     raw = indent + '.. code-block:: raw_markdown\n\n'
     raw += indent + '   {%\n'
@@ -1110,7 +1215,7 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     code = None
     code_language = None
 
-    HEADER_ANCHOR = re.compile(r'^# (.*) \{#.*}$')
+    HEADER_ANCHOR = re.compile(r'^(#+) (.*)\s+{#(.+)\s*}$')
 
     for line in text.splitlines():
         match = re.search(r"^(.*)```(.*)$", line)
@@ -1139,7 +1244,7 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
 
         # non-code clean content
         # fix rst#anchor -> md links#anchor
-        if ".rst)" in line:
+        if (".rst)" in line) or (".rst#"):
             line = re.sub(
                 r"\[(.+?)\]\(((\w|-|/|\.)*)\.rst(#.*?)?\)",
                 r"[\1](\2.md\4)",
@@ -1174,10 +1279,12 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
         line = line.replace(r'\|', '|')
         line = line.replace(r'\@', '@')
 
-        # initial header anchor causes conflicts with use of mkdocs-macros-plugin
+        # header anchor causes conflicts with use of mkdocs-macros-plugin
+        # adjust {#anchor} to {: #anchor }
+
         match = HEADER_ANCHOR.match(line)
         if match:
-            line = '# ' + match.group(1)
+            line = match.group(1) + ' ' + match.group(2) + ' {: #' + match.group(3) + " }"
 
         clean += line + '\n'
 
@@ -1364,32 +1471,40 @@ def _postprocess_pandoc_fenced_divs(md_file: str, text: str) -> str:
                 continue
 
             if fence:
-                state = "done"
-                # processing fenced div
-                logger.debug("fenced div")
-                logger.debug("  type:", type)
-                logger.debug("  title:", title)
-                logger.debug("  note:", note)
+                if len(fence.group(1)) > len(indent):
+                    # closing fence found - for a nested fenced div
+                    logger.debug("nested fenced div")
+                else :
+                    # closing fence found
+                    state = "done"
+                    # processing fenced div
+                    logger.debug("fenced div")
+                    logger.debug("  type:", type)
+                    logger.debug("  title:", title)
+                    logger.debug("  note:", note)
 
-                process += indent + '!!! ' + type
+                    process += indent + '!!! ' + type
 
-                if title != None and title.lower() != type.lower():
-                    process += ' "' + title + '"'
+                    if title != None and title.lower() != type.lower():
+                        process += ' "' + title + '"'
 
-                process += "\n\n"
-                for content in note.splitlines():
-                    process += '    ' + content + '\n'
+                    process += "\n\n"
+                    if ':::' in note:
+                        note = _postprocess_pandoc_fenced_divs(md_file,note)
 
-                # process += "\n"
+                    for content in note.splitlines():
+                        process += '    ' + content + '\n'
 
-                state = "scan"
-                admonition = False
-                admonition_title = False
-                type = None
-                indent = ''
-                title = None
-                note = None
-                continue
+                    # process += "\n"
+
+                    state = "scan"
+                    admonition = False
+                    admonition_title = False
+                    type = None
+                    indent = ''
+                    title = None
+                    note = None
+                    continue
 
             if note is not None:
                 if note == '' and blank:

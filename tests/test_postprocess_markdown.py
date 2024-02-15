@@ -6,6 +6,25 @@ import mkdocs_translate.translate
 class TestPostProcessMarkdown(unittest.TestCase):
     # logging.basicConfig(level=logging.INFO)
 
+    def test_nested_divs(self):
+        markdown = """
+::: admonition
+Explore Device Differences
+
+1.  Different output devices provide limitations in the amount of color information they can portray.
+
+2.  **Explore:** How does changing to a printed map affect the number of classes you can communicate using the current \"pastel\" approach?
+
+    ::: admonition
+    Instructor Notes
+
+    The answer is five, but to be really sure four. Read the tool tips to determine fitness for purpose.
+    :::
+:::
+        """
+        output = mkdocs_translate.translate._postprocess_pandoc_fenced_divs("inline", markdown)
+        self.assertTrue('!!! abstract "Instructor Notes"' in output)
+
     def test_fenced_divs_title(self):
         markdown = """
 ## Using your own Data Directory
@@ -31,7 +50,7 @@ Change [/MY/DATADIRECTORY]{.title-ref} to your data directory. If this directory
         self.assertEqual(indent[8], -1, "blank")
 
     def test_fenced_divs(self):
-        fenced_div = """2.  Download the container:
+        markdown = """2.  Download the container:
 
     ::: admonition
     Nightly Build
@@ -73,7 +92,7 @@ Change [/MY/DATADIRECTORY]{.title-ref} to your data directory. If this directory
 
 4.  Done!
         """
-        output = mkdocs_translate.translate._postprocess_pandoc_fenced_divs("inline", fenced_div)
+        output = mkdocs_translate.translate._postprocess_pandoc_fenced_divs("inline", markdown)
         self.assertTrue('!!! abstract "Release"' in output)
 
 

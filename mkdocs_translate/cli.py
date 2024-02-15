@@ -21,7 +21,8 @@ from .translate import convert_html
 from .translate import convert_markdown
 from .translate import convert_rst
 from .translate import deepl_document
-from .translate import index_rst
+from .translate import scan_index_rst
+from .translate import scan_download_rst
 from .translate import init_anchors
 from .translate import init_config
 
@@ -74,7 +75,7 @@ def french(
 
     folder = os.path.dirname(md_file)
 
-    md_fr = os.path.join(folder, os.path.basename(translated))
+    md_fr = os.path.normpath(os.path.join(folder, os.path.basename(translated)))
 
     shutil.copy2(translated, md_fr)
 
@@ -95,7 +96,7 @@ def index(
     rst_path = mkdocs_translate.translate.rst_folder
 
     if test:
-        index = index_rst(rst_path, test)
+        index = scan_index_rst(rst_path, test)
         print(index)
         return
 
@@ -104,11 +105,12 @@ def index(
 
     collected = collect_path(rst_glob, 'rst')
     collected.sort()
-    logger.info("Processing " + str(len(collected)) + " files")
+    logger.info("Indexing " + str(len(collected)) + " files")
 
     index = ''
     for file in collected:
-        index += index_rst(rst_path, file)
+        logger.info( "index: " + file)
+        index += scan_index_rst(rst_path, file)
 
     anchor_dir = os.path.dirname(anchor_path)
     if not os.path.exists(anchor_dir):
@@ -118,6 +120,55 @@ def index(
         anchor_file.write(index)
     print(anchor_path)
 
+@app.command()
+def download(
+        test: Optional[str] = typer.Option(
+            None,
+            "--test",
+            help="Test scan a single file, do not update download.properties file",
+        )
+):
+    """
+    Scan rst files collecting download references into a download.properties file.
+    """
+    rst_path = mkdocs_translate.translate.rst_folder
+    if test:
+        download_references: set[str] = scan_download_rst(rst_path, test)
+        print('\n'.join(download_references))
+        return
+
+    rst_glob = rst_path + "/**/*.rst"
+    docs_folder = mkdocs_translate.translate.docs_folder
+    rst_folder = mkdocs_translate.translate.rst_folder
+
+    collected = collect_path(rst_glob, 'rst')
+    collected.sort()
+    logger.info("Processing " + str(len(collected)) + " files")
+
+    downloads: dict[str : set[str]] = dict()
+    for file in collected:
+        download_references: set[str] = scan_download_rst(rst_path, file)
+        if len(download_references) > 0:
+            download_folder = os.path.normpath(os.path.join(os.path.dirname(file), "download"))
+            if download_folder.startswith(rst_folder):
+                download_folder = download_folder.replace(rst_folder, docs_folder, 1)
+
+            if download_folder in downloads:
+                downloads[download_folder].extend(download_references)
+            else:
+                downloads[download_folder] = download_references
+
+    ## output into docs directory for processing
+    for [download_folder, download_references] in downloads.items():
+        if not os.path.exists(download_folder):
+            print("download folder:", download_folder)
+            os.makedirs(download_folder)
+
+        download_txt_file = os.path.join(download_folder,"download.txt")
+        with open(download_txt_file, 'w') as download_file:
+            print("download.txt: ", download_txt_file)
+            text = "\n".join(download_references)
+            download_file.write(text)
 
 @app.command()
 def rst(

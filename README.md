@@ -213,12 +213,15 @@ Pandoc:
    mkdocs_translate internal_markdown target/contributing/style-guide.html
 
    diff manual/docs/contributing/style-guide.md target/contributing/style-guide.md
-   ``` 
+   ```
 
-
+4. Known limitations:
+   
+   * substitutions used for inline images
+   
 ## Configuration
 
-For core-geonetwork (or other projects following maven conventions) no configuration is required.
+For geoserver or core-geonetwork (or other projects following maven conventions) no configuration is required.
 
 To override configuration on command line add `-concfig <file.yml>` before the command:
 
@@ -273,7 +276,16 @@ The file `mkdocs_translate/config.yml` file contains some settings (defaults are
   project_copyright: 2023, Open Source Geospatial Foundation
   ```
   
-  Note sphinx built-in substiutions for  `|version|` and `|release|` hard coded to translate into macros.
+* The built-in substitutions for  `|version|` and `|release|` are changed to `{{ version }}` and `{{ release }}``
+  variables for use with `mkdocs-macros-plugin` variable substitution:
+  
+  Use `mkdocs.yml` to define:
+  ```
+  extra:
+    homepage: https://geoserver.org/
+    version: '2.24'
+    release: '2.24.2'
+  ```
 
 * `extlinks`: dictionary of config.py extlinks substitutions.
    
@@ -287,11 +299,12 @@ The file `mkdocs_translate/config.yml` file contains some settings (defaults are
     }
    ```
     
-   Use config.yml:
+   Use config.yml (note use of mkdocs-macros-plugin for variable substitution:
    ```
    extlinks:
        wiki: https://github.com/geoserver/geoserver/wiki/%s
        user: https://docs.geoserver.org/{{ branch }}/en/user/%s
        geos: https://osgeo-org.atlassian.net/browse/GEOS-%s|GEOS-%s
+       download_release: https://sourceforge.net/projects/geoserver/files/GeoServer/{{ release }}/geoserver-{{ release }}-%s.zip|geoserver-{{ release }}-%s.zip
    ```
   
