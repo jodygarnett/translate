@@ -215,9 +215,18 @@ Pandoc:
    diff manual/docs/contributing/style-guide.md target/contributing/style-guide.md
    ```
 
-4. Known limitations:
+## Known limitations
+
+Some things are not supported by pandoc, which will produce ``WARNING:`` messages:
+
+* substitutions used for inline images
+
+* Underlines: replace with bold or italic
+  
+   ```
+   WARNING: broken reference 'getting_involved' link:getting_involved-broken.rst
+   ```
    
-   * substitutions used for inline images
    
 ## Configuration
 

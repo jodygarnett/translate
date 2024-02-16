@@ -211,7 +211,10 @@ def scan_index_rst(base_path: str, rst_file: str) -> str:
                 index += doc + '.title=' + heading + "\n"
                 doc = None
 
-        match = re.search(r"^.. _((\w|.|-)*):(\s)*$", line)
+        if 'getting_involved' in line:
+            logger.debug('found you')
+
+        match = re.search(r'\.\. _((\w|\.|_|-)*):$', line)
         if match:
             if ref:
                 logging.warning("reference " + ref + " defined without a heading, skipped")
@@ -230,27 +233,32 @@ def scan_heading(index: int, lines: list[str]) -> str:
     """
     # Scan line by line for references and headings
     # # with overline, for parts
-    h1 = '#############################################################################################################'
+    h1  = '#############################################################################################################'
     # * with overline, for chapters
-    h2 = '*************************************************************************************************************'
+    h2  = '*************************************************************************************************************'
     # =, for sections
-    h3 = '============================================================================================================='
+    h3  = '============================================================================================================='
     # -, for subsections
-    h4 = '-------------------------------------------------------------------------------------------------------------'
+    h4  = '-------------------------------------------------------------------------------------------------------------'
     # ^, for subsubsections
-    h5 = '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'
+    h5  = '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'
     # “, for paragraphs
-    h6 = '"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""'
-    h7 = "`````````````````````````````````````````````````````````````````````````````````````````````````````````````"
-    h8 = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    h9 = "'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''"
+    h6  = '"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""'
+    h7  = "`````````````````````````````````````````````````````````````````````````````````````````````````````````````"
+    h8  = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    h9  = "'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''"
+    h10 = "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+
     if index >= len(lines) - 1:
         return None  # last line cannot be a heading
 
     line = lines[index]
-    line_length = len(line)
+    line_length = len(line.rstrip())
     under = lines[index + 1]
-    under_length = len(under)
+    under_length = len(under.rstrip())
+
+    # if 'Importer interface reference' in line:
+    #     logger.debug("found you")
 
     if under_length < line_length:
         return None  # not a heading
@@ -263,8 +271,9 @@ def scan_heading(index: int, lines: list[str]) -> str:
             under == h6[0:under_length] or \
             under == h7[0:under_length] or \
             under == h8[0:under_length] or \
-            under == h9[0:under_length]:
-        return line
+            under == h9[0:under_length] or \
+            under == h10[0:under_length]:
+        return line.rstrip()
 
     return None
 
@@ -301,7 +310,7 @@ def _doc_location(rst_path: str, doc_link: str) -> str:
     else:
         dir = os.path.dirname(rst_path)
         dir2 = os.path.relpath(dir, rst_folder)
-        link_path = os.path.join(dir2, doc_link)
+        link_path = os.path.normpath(os.path.join(dir2, doc_link))
         return '/' + link_path
 
 
@@ -482,7 +491,6 @@ def convert_rst(rst_file: str) -> str:
     logging.debug("Converting '" + rst_prep + "' to '" + md_tmp_file + "'")
 
     completed = subprocess.run(["pandoc",
-                                #      "--verbose",
                                 "--from", "rst",
                                 "--to", md_extensions_to,
                                 "--wrap=none",
@@ -541,9 +549,10 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
         text = _preprocess_rst_strip(rst_file, text, 'index')
     if '.. contents::' in text:
         text = _preprocess_rst_strip(rst_file, text, 'contents')
-    if text.startswith('.. _'):
-        text = text.split('\n',2
-                          )[2]
+
+    # if text.startswith('.. _'):
+    #     text = text.split('\n',2
+    #                       )[2]
 
     # gui-label and menuselection represented: **Cancel**
     text = re.sub(
@@ -969,7 +978,8 @@ def _block_directive_literalinclude(path: str, value: str, arguments: dict[str, 
         for _ in range(path.count('/') - 1):
             relative_path = '../' + relative_path
     else:
-        if relative_path[0:1] != '.' and '/' in relative_path:
+        if relative_path[0:1] != '.':
+            # include-markdown-plugin requires relative paths to start with ./ or ../
             relative_path = './' + relative_path
 
     if 'language' in arguments:
@@ -1218,6 +1228,7 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     HEADER_ANCHOR = re.compile(r'^(#+) (.*)\s+{#(.+)\s*}$')
 
     for line in text.splitlines():
+
         match = re.search(r"^(.*)```(.*)$", line)
         if match:
             if code == None:
