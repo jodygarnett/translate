@@ -42,73 +42,125 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 
    * https://pandoc.org/installing.html
 
+## Setting up mkdocs project
+
+A working [example](example) is provided to be adapted for your project:
+
+1. Create [requirements.txt](example/requirements.txt) with mkdocs plugins required.
+
+2. Create [mkdocs.yml](example/mkdocs.yml). 
+
+3. Optional: If your content uses `download` directive to include external content, there is a `mkdocs` hook for processing of `download.txt` files. 
+   
+   Create [download.py](example/download.py).
+
+   Register hook with `mkdocs.yml`:
+       
+   ```yaml
+   # Customizations
+   hooks:
+    - download.py
+   ```
+
+4. Use `.gitignore` to ignore the following:
+   
+    ```
+    build
+    target
+    ```
+
+5. The resulting directory structure is:
+   
+   ```
+   doc/
+   source/
+   .gitignore 
+   requirements.txt
+   mkdocs.yml
+   download.py
+   ```
+
 ## Format conversion from sphinx-build rst files
+
+GeoServer is used as an example here, which is a maven project with a convention of `target` for temporary files.
 
 1. Copy everything over (so all the images and so on are present)
    
-   ```
-   cd core-geonetwork/docs
-   copy -r manuals/source manual/doc
-   ```
+    ```
+    cd geoserver/doc/en/user
+    copy -r source doc
+    ```
    
-2. Use ``docs/.gitignore`` to carefully avoid committing:
-   
-   ```
-   *.rst
-   conf.py
-   ```
-   
-3. To index references in rst files into `docs/anchors.txt`:
+2. Clean sphinx-build `conf.py` and ``rst`` files from `docs/` folder.
 
-   ```
-   cd core-geonetwork/docs/manual
-   mkdocs_translate index
-   ```
+    ```
+    find doc -type f -regex ".*\.rst" -delete
+    rm doc/conf.py
+    ```
 
-4. To bulk convert all content from ``rst`` to ``md``:
-   
-   ```
-   cd core-geonetwork/docs/manual
-   mkdocs_translate rst docs/contributing/doing-a-release.rst
-   ```
-   
-5. Review this content you may find individual files to fix.
+3. Optional: Create a [config.yml](config.yml) filling in the conversion parameters for your project.
+    
+    This is only required to handle advanced sphinx-build `config.py` options like substitutions and external links.
 
-   Some formatting is easier to fix in the `rst` files before conversion:
+4.  To scan rst files before conversion:
+
+    * `all`: (default)
+    * `index`: scan anchors and headings into `target/convert/anchors.txt` for `doc` and `ref` directives.
+    * `download`: scan `download` directives for external content, into `docs` folder, producing `download/download.txt` folders.
+    * `toc`: scan `toc` directives, producing nav structure for use with `mkdocs.yml` file
+    
+    ```
+    mkdocs_translate scan
+    ```
+
+5. To bulk convert all content from ``rst`` to ``md``:
    
-   * Indention of nested lists in ``rst`` is often incorrect, resulting in restarted numbering or block quotes.
+    ```
+    mkdocs_translate rst source/**/*.rst
+    ```
+   
+6. Review this content you may find individual files to fix.
+
+    Some formatting is easier to fix in the `rst` files before conversion:
+   
+    * Indention of nested lists in ``rst`` is often incorrect, resulting in restarted numbering or block quotes.
   
-   * Random ``{.title-ref}`` snippets is a general indication to simplify the rst and re-translate.
+    * Random ``{.title-ref}`` snippets is a general indication to simplify the rst and re-translate.
 
-   * literalinclude (of source code or configuration file) not yet handled, recommend mdkdocs-include plugin.
+    * Anchors or headings with trailing whitespace throwing off the heading scan, resulting in broken references
 
 6. Convert a single file:
    
    ```
-   cd core-geonetwork/docs/manual
-   mkdocs_translate rst docs/contributing/doing-a-release.rst
+   mkdocs_translate rst source/introduction/license.rst
    ```
 
 7. Bulk convert files in a folder:
    
    ```
-   cd core-geonetwork/docs/manual
-   mkdocs_translate rst docs/introduction/**/*.rst
+   mkdocs_translate rst source/introduction/**/*.rst
    ```
 
-8. To copy any edited `rst` files back to the origional rst folder:
+8. To generate out navigation tree:
+   
+   ```
+   mkdocs_translate scan toc
+   ```
+   
+   The output is printed to standard out and may be appended to `mkdocs.yml` file.
 
-   ```
-   cd core-geonetwork/docs/manual/doc
-   find . -name '*.rst' | cpio -pdm  ../../manuals/source
-   ```
+### Known limitations
 
-9. To clean up ``rst`` files from `docs/` folder when finished:
+Some things are not supported by pandoc, which will produce ``WARNING:`` messages:
 
+* substitutions used for inline images
+
+* Underlines: replace with bold or italic
+  
    ```
-   find . -type f -regex ".*\.rst" -delete
-   rm docs/conf.py
+   WARNING: broken reference 'getting_involved' link:getting_involved-broken.rst
    ```
+   
 
 ## Language Translation
 
@@ -214,20 +266,7 @@ Pandoc:
 
    diff manual/docs/contributing/style-guide.md target/contributing/style-guide.md
    ```
-
-## Known limitations
-
-Some things are not supported by pandoc, which will produce ``WARNING:`` messages:
-
-* substitutions used for inline images
-
-* Underlines: replace with bold or italic
-  
-   ```
-   WARNING: broken reference 'getting_involved' link:getting_involved-broken.rst
-   ```
-   
-   
+ 
 ## Configuration
 
 For geoserver or core-geonetwork (or other projects following maven conventions) no configuration is required.

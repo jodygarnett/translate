@@ -78,7 +78,7 @@ def init_config(override_path: str) -> None:
     upload_folder = os.path.normpath(os.path.join(config['project_folder'], config['build_folder'], config['upload_folder']))
     convert_folder = os.path.normpath(os.path.join(config['project_folder'], config['build_folder'], config['convert_folder']))
     download_folder = os.path.normpath(os.path.join(config['project_folder'], config['build_folder'], config['download_folder']))
-    anchor_file = os.path.normpath(os.path.join(docs_folder, config['anchor_file']))
+    anchor_file = os.path.normpath(os.path.join(convert_folder, config['anchor_file']))
 
     rst_folder = docs_folder
     if 'rst_folder' in config:
@@ -217,7 +217,7 @@ def scan_index_rst(base_path: str, rst_file: str) -> str:
         match = re.search(r'\.\. _((\w|\.|_|-)*):$', line)
         if match:
             if ref:
-                logging.warning("reference " + ref + " defined without a heading, skipped")
+                logging.warning(relative_path[1:]+":"+str(i)+" : reference '" + ref + "' defined without a heading, skipped")
 
             ref = match.group(1)
             logging.debug(" |   ref:" + ref)
@@ -388,7 +388,7 @@ def _ref_path(rst_path: str, reference: str) -> str:
 #
 def scan_download_rst(base_path: str, rst_file: str) -> set[str]:
     """
-    Scan through rst_file for download directives to produce an download.properties list
+    Scan through rst_file for download directives to produce an download.txt list
     """
     if not os.path.exists(base_path):
         raise FileNotFoundError(errno.ENOENT, f"RST base_path does not exist at location: {base_path}")

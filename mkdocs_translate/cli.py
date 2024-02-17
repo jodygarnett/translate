@@ -81,55 +81,19 @@ def french(
 
     print(md_fr, "\n")
 
-
 @app.command()
-def index(
+def scan(
+        scan: Annotated[str, typer.Argument(
+            help="RST scan to perform (all, index, toc, download)."
+        )] = "all",
         test: Optional[str] = typer.Option(
             None,
             "--test",
-            help="Test scan a single file, do not update anchors.txt file",
+            help="Test scan a single file, sending output to standard output",
         )
 ):
     """
-    Scan rst files collecting doc and ref targets updating anchors.txt index.
-    """
-    rst_path = mkdocs_translate.translate.rst_folder
-
-    if test:
-        index = scan_index_rst(rst_path, test)
-        print(index)
-        return
-
-    rst_glob = rst_path + "/**/*.rst"
-    anchor_path = mkdocs_translate.translate.anchor_file
-
-    collected = collect_path(rst_glob, 'rst')
-    collected.sort()
-    logger.info("Indexing " + str(len(collected)) + " files")
-
-    index = ''
-    for file in collected:
-        logger.info( "index: " + file)
-        index += scan_index_rst(rst_path, file)
-
-    anchor_dir = os.path.dirname(anchor_path)
-    if not os.path.exists(anchor_dir):
-        print("anchors.txt index directory:", anchor_dir)
-        os.makedirs(anchor_dir)
-    with open(anchor_path, 'w') as anchor_file:
-        anchor_file.write(index)
-    print(anchor_path)
-
-@app.command()
-def download(
-        test: Optional[str] = typer.Option(
-            None,
-            "--test",
-            help="Test scan a single file, do not update download.properties file",
-        )
-):
-    """
-    Scan rst files collecting download references into a download.properties file.
+    Scan rst files collecting index, download, toc details for migration process.
     """
     rst_path = mkdocs_translate.translate.rst_folder
     if test:
@@ -138,16 +102,42 @@ def download(
         return
 
     rst_glob = rst_path + "/**/*.rst"
-    docs_folder = mkdocs_translate.translate.docs_folder
-    rst_folder = mkdocs_translate.translate.rst_folder
 
     collected = collect_path(rst_glob, 'rst')
     collected.sort()
-    logger.info("Processing " + str(len(collected)) + " files")
+    logger.info("Scanning " + str(len(collected)) + " files")
+
+    if scan.lower() in ("all","index"):
+        scan_index(collected)
+    if scan.lower() in ("all","download"):
+        scan_download(collected)
+
+def scan_index( collected: list[str]):
+    # configuration settings
+    rst_path = mkdocs_translate.translate.rst_folder
+    anchor_path = mkdocs_translate.translate.anchor_file
+
+    index = ''
+    for file in collected:
+        logger.debug("index: " + file)
+        index += scan_index_rst(rst_path, file)
+
+    anchor_dir = os.path.dirname(anchor_path)
+    if not os.path.exists(anchor_dir):
+        print("anchors.txt index directory:", anchor_dir)
+        os.makedirs(anchor_dir)
+    with open(anchor_path, 'w') as anchor_file:
+        anchor_file.write(index)
+    logger.info("index: "+anchor_path)
+
+def scan_download( collected: list[str] ):
+    # configuration settings
+    docs_folder = mkdocs_translate.translate.docs_folder
+    rst_folder = mkdocs_translate.translate.rst_folder
 
     downloads: dict[str : set[str]] = dict()
     for file in collected:
-        download_references: set[str] = scan_download_rst(rst_path, file)
+        download_references: set[str] = scan_download_rst(rst_folder, file)
         if len(download_references) > 0:
             download_folder = os.path.normpath(os.path.join(os.path.dirname(file), "download"))
             if download_folder.startswith(rst_folder):
@@ -161,15 +151,18 @@ def download(
     ## output into docs directory for processing
     for [download_folder, download_references] in downloads.items():
         if not os.path.exists(download_folder):
-            print("download folder:", download_folder)
+            logging.info("download folder:" + download_folder)
             os.makedirs(download_folder)
 
         download_txt_file = os.path.join(download_folder,"download.txt")
         with open(download_txt_file, 'w') as download_file:
-            print("download.txt: ", download_txt_file)
+            logging.info("download.txt: "+ download_txt_file)
             text = "\n".join(download_references)
             download_file.write(text)
-
+        download_gitiginore = os.path.join(download_folder,".gitignore")
+        with open(download_gitiginore, 'w') as gitignore:
+            text = "*\n!download.txt"
+            gitignore.write(text)
 @app.command()
 def rst(
         rst_path: Annotated[
