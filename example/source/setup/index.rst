@@ -127,7 +127,7 @@ The file `mkdocs_translate/config.yml` file contains some settings (defaults are
 
 * `deepl_base_url`: "https://api-free.deepl.com"
 
-  Customize if you are paying customer.
+  Customize if you have a subscription to deepl.
 
 * `project_folder`: "."
 
@@ -170,10 +170,10 @@ The file `mkdocs_translate/config.yml` file contains some settings (defaults are
      copyright: 2023, Open Source Geospatial Foundation
      project_copyright: 2023, Open Source Geospatial Foundation
 
-* The built-in substitutions for  `|version|` and `|release|` are changed to `{{ version }}` and `{{ release }}``
+* The built-in substitutions for  `|version|` and `|release|` are changed to ``{{ version }}`` and ``{{ release }}``
   variables for use with `mkdocs-macros-plugin` variable substitution:
 
-  Use :file:`mkdocs.yml` to define:
+  Use :file:`mkdocs.yml` to define these variable substitutions:
 
   .. code-block:: yaml
 
@@ -182,19 +182,7 @@ The file `mkdocs_translate/config.yml` file contains some settings (defaults are
        version: '2.24'
        release: '2.24.2'
 
-* `extlinks`: dictionary of config.py extlinks substitutions.
-
-  To convert sphinx-build config.py:
-
-  .. code-block:: python
-
-     extlinks = {
-        'wiki': ('https://github.com/geoserver/geoserver/wiki/%s', '%s'),
-        'user': ('https://docs.geoserver.org/'+branch+'/en/user/%s', '%s'),
-        'geos': ('https://osgeo-org.atlassian.net/browse/GEOS-%s','GEOS-%s'),
-     }
-
-  Use :file:`translate.yml` (note use of `mkdocs-macros-plugin` for variable substitution of `release`):
+* `extlinks`: dictionary of config.py extlinks substitutions taking the form:
 
   .. code-block::
 
@@ -203,3 +191,21 @@ The file `mkdocs_translate/config.yml` file contains some settings (defaults are
        user: https://docs.geoserver.org/{{ branch }}/en/user/%s
        geos: https://osgeo-org.atlassian.net/browse/GEOS-%s|GEOS-%s
        download_release: https://sourceforge.net/projects/geoserver/files/GeoServer/{{ release }}/geoserver-{{ release }}-%s.zip|geoserver-{{ release }}-%s.zip
+
+  .. note::
+
+     Use of `mkdocs-macros-plugin` for variable substitution of `release` above.
+
+     Use of ``|GEOS-%s`` to override default link text ``%s``.
+
+  This handles the sphinx-build :file:`config.py` extlinks during migration:
+
+  .. code-block:: python
+
+     extlinks = {
+        'wiki': ('https://github.com/geoserver/geoserver/wiki/%s', '%s'),
+        'user': ('https://docs.geoserver.org/'+branch+'/en/user/%s', '%s'),
+        'geos': ('https://osgeo-org.atlassian.net/browse/GEOS-%s','GEOS-%s'),
+        'download_release': ('https://sourceforge.net/projects/geoserver/files/GeoServer/' + release + '/geoserver-' + release + '-%s.zip', 'geoserver-' + release + '-%s.zip )
+     }
+
