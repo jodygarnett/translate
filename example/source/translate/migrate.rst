@@ -30,14 +30,15 @@ Preflight Scans
 
       docs/setup/download/download.txt
       build/anchors.txt
-      build/nav.yaml
+
+   .. build/nav.yaml
 
 .. _migrate:
 
 Content Migration
 -----------------
 
-Format conversion from :command:`sphinx-build` :file:`rst` files to :command:`mkdocs`` :file:`md` content.
+Format conversion from :command:`sphinx-build` reStructuredText files to :command:`mkdocs` Markdown content.
 
 1. Copy everything over (so all the images and so on are present)
 
@@ -53,22 +54,11 @@ Format conversion from :command:`sphinx-build` :file:`rst` files to :command:`mk
       find doc -type f -regex ".*\.rst" -delete
       rm doc/conf.py
 
-4.  To scan rst files before conversion:
-
-    * `all`: (default)
-    * `index`: scan anchors and headings into `target/convert/anchors.txt` for `doc` and `ref` directives.
-    * `download`: scan `download` directives for external content, into `docs` folder, producing `download/download.txt` folders.
-    * `toc`: scan `toc` directives, producing nav structure for use with `mkdocs.yml` file
-
-    .. code-block:: bash
-
-       mkdocs_translate scan
-
 5. To bulk convert all content from :file:`rst` to :file:`md`:
 
    .. code-block:: bash
 
-      mkdocs_translate rst source/**/*.rst
+      mkdocs_translate migrate source/**/*.rst
 
 6. Review this content you may find individual files to fix.
 

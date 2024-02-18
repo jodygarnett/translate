@@ -333,6 +333,12 @@ reStructuredText does not offer custom icons, the closest is the use of substitu
 
    The :command:`mkdocs_translate` and :command:`pandoc` combo is unable to convert inline images at this time.
 
+   ::
+
+      [WARNING] Reference not found for 'Key "osgeo_mark"' at build/migrate/guide/markdown.tmp.prep.rst_chunk line 5 column 13
+
+
+
 Figures
 """""""
 

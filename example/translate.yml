@@ -20,4 +20,4 @@ substitutions:
 extlinks:
   github: https://github.com/jodygarnett/translate/blob/main/%s
   release: https://github.com/jodygarnett/translate/releases/tag/{{ release }}|Release {{ release }}
-  squidfunk: 'https://squidfunk.github.io/mkdocs-material/%s
+  squidfunk: https://squidfunk.github.io/mkdocs-material/%s
