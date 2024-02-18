@@ -52,12 +52,16 @@ def load_config(override_path: str) -> dict:
         # override configuration
         with open(override_path, 'r') as file:
             text = file.read()
-            return yaml.safe_load(text)
+        return yaml.safe_load(text)
+    elif os.path.exists('translate.yml'):
+        # current directory configuration
+        with open('translate.yml', 'r') as file:
+            text = file.read()
+        return yaml.safe_load(text)
     else:
         # default configuration
         raw = pkgutil.get_data('mkdocs_translate', "config.yml")
         return yaml.safe_load(raw.decode('utf-8'))
-
 
 def init_config(override_path: str) -> None:
     """
@@ -210,9 +214,6 @@ def scan_index_rst(base_path: str, rst_file: str) -> str:
                 index += doc + '=' + relative_path + "\n"
                 index += doc + '.title=' + heading + "\n"
                 doc = None
-
-        if 'getting_involved' in line:
-            logger.debug('found you')
 
         match = re.search(r'\.\. _((\w|\.|_|-)*):$', line)
         if match:
