@@ -20,6 +20,8 @@ def on_pre_build(config, **kwargs):
             path_list = file.read()
 
         for path in path_list.splitlines():
+            if len(path.strip()) == 0 or path.startswith('#'):
+                continue
             resolved = os.path.normpath(os.path.join(download_folder, path))
             if os.path.exists(resolved):
                 dest = os.path.normpath(os.path.join(download_folder, os.path.basename(path)))

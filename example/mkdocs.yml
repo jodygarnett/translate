@@ -1,17 +1,17 @@
 # Project information
-site_name: GeoServer
-site_description: Designed for interoperability to publishes data from any major spatial data source using open standards.
+site_name: MkDocs Translate Example
+site_description: Example sphinx-build documentation project for use with mkdocs_translate script.
 
-site_dir: target/html
-site_url: https://docs.geoserver.org/
+site_dir: build/html
+site_url: http://jodygarnett.github.io/translate
 
 # Repository
-repo_name: geoserver
-repo_url: https://github.com/geoserver/geoserver
-edit_uri: edit/main/docs/en/user/docs
+repo_name: translate
+repo_url: https://github.com/jodygarnett/translate
+edit_uri: edit/main/example/docs
 
 # Copyright
-copyright: Copyright &copy; 2023 Open Source Geospatial Foundation
+copyright: Copyright &copy; 2024 Open Source Geospatial Foundation
 
 extra_css:
   - assets/stylesheets/extra.css
@@ -57,9 +57,7 @@ theme:
 plugins:
   - exclude:
       glob:
-        - '**/*.rst'
         - '**/download/download.txt'
-        - 'conf.py'
   - include-markdown:
       # uses {% include: file %}
       preserve_includer_indent: true
@@ -78,15 +76,12 @@ plugins:
 hooks:
   - download.py
 extra:
-  homepage: https://geoserver.org/
+  homepage: http://jodygarnett.github.io/translate
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/geoserver
-    - icon: geoserver/logo
-      link: https://geoserver.org/
-      name: GeoServer Home
-  version: '2.24'
-  release: '2.24.2'
+      link: ttps://github.com/jodygarnett/translate
+  version: '1.0'
+  release: '1.0.0'
 
 # Extensions
 # - These are carefully chosen to work with pandoc markdown support for whole document translation
@@ -125,7 +120,7 @@ validation:
     not_found: warn
     absolute_links: info
   links:
-    not_found: ignore
+    not_found: warn
     absolute_links: info
     unrecognized_links: info
 
@@ -134,249 +129,4 @@ not_in_nav: |
   **/download/*.md
 
 nav:
-  - 'User Manual': index.md
-  - 'Introduction':
-    - introduction/index.md
-    - introduction/overview.md
-    - introduction/history.md
-    - introduction/gettinginvolved.md
-    - introduction/license.md
-  - 'Installation':
-    - installation/index.md
-    - installation/linux.md
-    - installation/win_binary.md
-    - installation/win_installer.md
-    - installation/war.md
-    - installation/docker.md
-    - installation/upgrade.md
-  - 'Getting Started':
-    - gettingstarted/index.md
-    - gettingstarted/geopkg-quickstart/index.md
-    - gettingstarted/group-quickstart/index.md
-    - gettingstarted/image-quickstart/index.md
-    - gettingstarted/postgis-quickstart/index.md
-    - gettingstarted/shapefile-quickstart/index.md
-    - gettingstarted/style-quickstart/index.md
-    - gettingstarted/web-admin-quickstart/index.md
-  - 'Web Admin':
-    - webadmin/index.md
-    - webadmin/about.md
-    - webadmin/welcome.md
-  - 'Data':
-    - data/index.md
-    - 'Data Settings':
-      - data/webadmin/index.md
-      - data/webadmin/layergroups.md
-      - data/webadmin/layerpreview.md
-      - data/webadmin/layers.md
-      - data/webadmin/stores.md
-      - data/webadmin/workspaces.md
-    - 'Vector':
-      - data/vector/index.md
-      - data/vector/directory.md
-      - data/vector/featurepregen.md
-      - data/vector/geopkg.md
-      - data/vector/properties.md
-      - data/vector/shapefile.md
-    - 'Raster':
-      - data/raster/index.md
-      - data/raster/arcgrid.md
-      - data/raster/coverageview.md
-      - data/raster/gdal.md
-      - data/raster/geopkg.md
-      - data/raster/geotiff.md
-      - data/raster/imagepyramid.md
-      - data/raster/worldimage.md
-      - data/raster/imagemosaic/index.md
-      - data/raster/imagemosaic/configuration.md
-      - data/raster/imagemosaic/tutorial.md
-    - 'Database':
-      - data/database/index.md
-      - data/database/connection-pooling.md
-      - data/database/db2.md
-      - data/database/h2.md
-      - data/database/jndi.md
-      - data/database/mysql.md
-      - data/database/oracle.md
-      - data/database/postgis.md
-      - data/database/primarykey.md
-      - data/database/sqlserver.md
-      - data/database/sqlsession.md
-      - data/database/sqlview.md
-    - 'Cascade':
-      - data/cascaded/index.md
-      - data/cascaded/stored_query.md
-      - data/cascaded/wfs.md
-      - data/cascaded/wms.md
-      - data/cascaded/wmts.md
-    - 'Application Schema':
-      - data/app-schema/index.md
-      - data/app-schema/app-schema-resolution.md
-      - data/app-schema/complex-features.md
-      - data/app-schema/configuration.md
-      - data/app-schema/cql-functions.md
-      - data/app-schema/data-access-integration.md
-      - data/app-schema/data-stores.md
-      - data/app-schema/feature-chaining.md
-      - data/app-schema/installation.md
-      - data/app-schema/joining.md
-      - data/app-schema/mapping-file.md
-      - data/app-schema/mongo-tutorial.md
-      - data/app-schema/polymorphism.md
-      - data/app-schema/property-interpolation.md
-      - data/app-schema/secondary-namespaces.md
-      - data/app-schema/solr-tutorial.md
-      - data/app-schema/supported-gml-versions.md
-      - data/app-schema/tutorial.md
-      - data/app-schema/wfs-2.0-support.md
-      - data/app-schema/wfs-service-settings.md
-      - data/app-schema/wms-support.md
-  - 'Styling':
-    - styling/index.md
-    - styling/webadmin/index.md
-    - 'SLD Styling':
-      - styling/sld/index.md
-      - styling/sld/introduction.md
-      - styling/sld/working.md
-      - 'Cookbook':
-        - styling/sld/cookbook/index.md
-        - styling/sld/cookbook/points.md
-        - styling/sld/cookbook/lines.md
-        - styling/sld/cookbook/polygons.md
-        - styling/sld/cookbook/rasters.md
-      - 'Reference':
-        - styling/sld/reference/index.md
-        - styling/sld/reference/sld.md
-        - styling/sld/reference/layers.md
-        - styling/sld/reference/styles.md
-        - styling/sld/reference/rules.md
-        - styling/sld/reference/filters.md
-        - styling/sld/reference/pointsymbolizer.md
-        - styling/sld/reference/linesymbolizer.md
-        - styling/sld/reference/polygonsymbolizer.md
-        - styling/sld/reference/textsymbolizer.md
-        - styling/sld/reference/labeling.md
-        - styling/sld/reference/rastersymbolizer.md
-      - 'Extensions':
-        - styling/sld/extensions/index.md
-        - styling/sld/extensions/geometry-transformations.md
-        - styling/sld/extensions/rendering-transform.md
-        - styling/sld/extensions/pointsymbols.md
-        - styling/sld/extensions/substitution.md
-        - styling/sld/extensions/uom.md
-        - styling/sld/extensions/label-obstacles.md
-        - styling/sld/extensions/margins.md
-        - styling/sld/extensions/randomized.md
-        - 'Composite Blending':
-          - styling/sld/extensions/composite-blend/index.md
-          - styling/sld/extensions/composite-blend/example.md
-          - styling/sld/extensions/composite-blend/modes.md
-          - styling/sld/extensions/composite-blend/syntax.md
-        - 'Z-Order':
-          - styling/sld/extensions/z-order/index.md
-          - styling/sld/extensions/z-order/syntax.md
-          - styling/sld/extensions/z-order/example.md
-        - styling/sld/extensions/rendering-selection.md
-      - 'Tips':
-        - styling/sld/tipstricks/index.md
-        - styling/sld/tipstricks/mixed-geometries.md
-        - styling/sld/tipstricks/transformation-func.md
-      - styling/sld/language.md
-    - styling/qgis/index.md
-    - 'CSS Styling':
-      - styling/css/index.md
-      - styling/css/install.md
-      - styling/css/tutorial.md
-      - styling/css/cascading.md
-      - styling/css/directives.md
-      - styling/css/filters.md
-      - styling/css/metadata.md
-      - styling/css/multivalueprops.md
-      - styling/css/nested.md
-      - styling/css/properties.md
-      - styling/css/styledmarks.md
-      - styling/css/transformation.md
-      - styling/css/valuetypes.md
-      - 'Cookbook':
-        - styling/css/cookbook/index.md
-        - styling/css/cookbook/line.md
-        - styling/css/cookbook/point.md
-        - styling/css/cookbook/polygon.md
-        - styling/css/cookbook/raster.md
-      - 'Examples':
-        - styling/css/examples/index.md
-        - styling/css/examples/extrude.md
-        - styling/css/examples/kml.md
-        - styling/css/examples/misc.md
-        - styling/css/examples/randomfills.md
-        - styling/css/examples/transformation.md
-    - 'YSLD Styling':
-      - styling/ysld/index.md
-      - styling/ysld/installing.md
-      - styling/ysld/gs-extensions.md
-      - 'Reference':
-        - styling/ysld/reference/index.md
-        - styling/ysld/reference/structure.md
-        - styling/ysld/reference/featurestyles.md
-        - styling/ysld/reference/rules.md
-        - styling/ysld/reference/symbolizers/index.md
-        - styling/ysld/reference/symbolizers/line.md
-        - styling/ysld/reference/symbolizers/polygon.md
-        - styling/ysld/reference/symbolizers/point.md
-        - styling/ysld/reference/symbolizers/raster.md
-        - styling/ysld/reference/symbolizers/text.md
-        - styling/ysld/reference/scalezoom.md
-        - styling/ysld/reference/filters.md
-        - styling/ysld/reference/functions.md
-        - styling/ysld/reference/variables.md
-        - styling/ysld/reference/transforms.md
-      - 'Cookbook':
-        - styling/ysld/cookbook/index.md
-        - styling/ysld/cookbook/lines.md
-        - styling/ysld/cookbook/points.md
-        - styling/ysld/cookbook/polygons.md
-        - styling/ysld/cookbook/rasters.md
-    - 'MBStyle Styling':
-      - styling/mbstyle/index.md
-      - styling/mbstyle/installing.md
-      - styling/mbstyle/source.md
-      - 'Reference': styling/mbstyle/reference/index.md
-      - 'Cookbook':
-        - styling/mbstyle/cookbook/index.md
-        - styling/mbstyle/cookbook/lines.md
-        - styling/mbstyle/cookbook/points.md
-        - styling/mbstyle/cookbook/polygons.md
-    - 'Styling Workshop':
-      - styling/workshop/index.md
-      - 'Setup':
-        - styling/workshop/setup/index.md
-        - styling/workshop/setup/data.md
-        - styling/workshop/setup/install.md
-      - 'Design':
-        - styling/workshop/design/index.md
-        - styling/workshop/design/style.md
-        - styling/workshop/design/symbology.md
-      - 'CSS Workshop':
-        - styling/workshop/css/index.md
-        - styling/workshop/css/css.md
-        - styling/workshop/css/linestring.md
-        - styling/workshop/css/polygon.md
-        - styling/workshop/css/point.md
-        - styling/workshop/css/raster.md
-        - styling/workshop/css/done.md
-      - 'MBStyle Workshop':
-        - styling/workshop/mbstyle/index.md
-        - styling/workshop/mbstyle/mbstyle.md
-        - styling/workshop/mbstyle/linestring.md
-        - styling/workshop/mbstyle/polygon.md
-        - styling/workshop/mbstyle/point.md
-        - styling/workshop/mbstyle/raster.md
-        - styling/workshop/mbstyle/done.md
-      - 'YSLD Workshop':
-        - styling/workshop/ysld/index.md
-        - styling/workshop/ysld/ysld.md
-        - styling/workshop/ysld/linestring.md
-        - styling/workshop/ysld/polygon.md
-        - styling/workshop/ysld/point.md
-        - styling/workshop/ysld/raster.md
-        - styling/workshop/ysld/done.md
+  - index.md

@@ -30,17 +30,12 @@ out/
 
 # Python stuff
 venv
-**/__pycache__
+__pycache__
 # Sphinx-build
 *.mo
 *.egg-info/
 dist/
 build/
-
-# sphinx-build and mkdocs
-*/conf.py
-*.rst
-*.tmp.md
 
 # Eclipse project files
 .metadata

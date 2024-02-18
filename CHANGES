@@ -1,3 +1,8 @@
+0.3.0 by Jody Garnett
+
+* setup example sphinx-build project
+* combine preflight scan activities
+
 0.2.0 by Jody Garnett
 
 * pyproject.toml refactor for external use

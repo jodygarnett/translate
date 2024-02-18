@@ -20,10 +20,10 @@ A translate script is provided to facilitate working with pandoc and deepl trans
    cd core-genetwork/docs/manual
    ```
 
-3. The script makes use of ``target`` folder for scratch files:
+3. The script makes use of existing ``build`` (or ``target``) folder for scratch files:
 
    ```
-   mkdir target
+   mkdir build
    ```
 
 4. This script requires ***pandoc*** be installed:
@@ -41,6 +41,12 @@ A translate script is provided to facilitate working with pandoc and deepl trans
    References:
 
    * https://pandoc.org/installing.html
+
+5. Optional: Create a [translate.yml](translate.yml) filling in the conversion parameters for your project.
+
+   This file is used to indicate the `build` or `target` directory to use for temporary files.
+    
+   Additional configuration options are required for advanced sphinx-build `config.py` options like substitutions and external links.
 
 ## Setting up mkdocs project
 
@@ -97,10 +103,6 @@ GeoServer is used as an example here, which is a maven project with a convention
     find doc -type f -regex ".*\.rst" -delete
     rm doc/conf.py
     ```
-
-3. Optional: Create a [config.yml](config.yml) filling in the conversion parameters for your project.
-    
-    This is only required to handle advanced sphinx-build `config.py` options like substitutions and external links.
 
 4.  To scan rst files before conversion:
 

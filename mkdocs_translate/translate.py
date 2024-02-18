@@ -1678,7 +1678,7 @@ def preprocess_markdown(md_file: str, md_prep: str) -> str:
 
 def convert_html(html_file: str) -> str:
     """
-    Use pandoc to convert markdown file to html file for translation.
+    Use pandoc to html file to markdown file after translation.
     :param html_file: HTML file path
     :return: md file path
     """

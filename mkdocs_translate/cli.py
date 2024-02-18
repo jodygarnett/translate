@@ -164,7 +164,7 @@ def scan_download( collected: list[str] ):
             text = "*\n!download.txt"
             gitignore.write(text)
 @app.command()
-def rst(
+def migrate(
         rst_path: Annotated[
             List[str], typer.Argument(help="path to rst file(s)")] = mkdocs_translate.translate.rst_folder,
 ):

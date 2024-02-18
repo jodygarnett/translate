@@ -1,0 +1,83 @@
+<project name="example" default="html">
+
+  <target name="init">
+    <property environment="env"/>
+
+    <condition property="sphinx.available">
+      <or>
+        <available file="sphinx-build" filepath="${env.PATH}"/>
+        <available file="sphinx-build.exe" filepath="${env.Path}"/>
+        <available file="sphinx-build.exe" filepath="${env.PATH}"/>
+      </or>
+    </condition>
+
+    <condition property="autobuild.available">
+      <or>
+        <available file="sphinx-autobuild" filepath="${env.PATH}"/>
+        <available file="sphinx-autobuild.exe" filepath="${env.Path}"/>
+        <available file="sphinx-autobuild.exe" filepath="${env.PATH}"/>
+      </or>
+    </condition>
+
+    <condition property="build.directory" value="${build.directory}" else="${basedir}/target">
+      <isset property="build.directory" />
+    </condition>
+
+    <condition property="project.version" value="${project.version}" else="1.0-SNAPSHOT">
+      <isset property="project.version" />
+    </condition>
+
+    <echo level="debug">sphinx-build available: ${sphinx.available}</echo>
+    <echo level="debug">sphinx-autobuild available: ${autobuild.available}</echo>
+
+    <echo level="debug">Base directory is ${basedir}</echo>
+    <echo level="debug">Build directory is ${build.directory}</echo>
+    <echo level="debug">project version is ${project.version}</echo>
+
+  </target>
+
+  <target name="clean" depends="init">
+    <delete includeemptydirs="true" failonerror="false">
+      <fileset dir="${build.directory}" defaultexcludes="false">
+        <include name="**/" />
+      </fileset>
+    </delete>
+  </target>
+
+  <target name="html" depends="init" if="sphinx.available"
+    description="Generate html documentation">
+    <mkdir dir="${build.directory}"/>
+    <antcall target="sphinx">
+      <param name="build" value="html" />
+    </antcall>
+  </target>
+
+  <target name="site" depends="init" if="autobuild.available"
+    description="Interactive generation of user html documentation for GeoServer">
+
+    <mkdir dir="${build.directory}"/>
+    <antcall target="autobuild">
+    </antcall>
+  </target>
+
+  <target name="sphinx" if="sphinx.available">
+    <local name="argLine"/>
+    <property name="argLine" value="-D release=${project.version} -q -W --keep-going -b ${build} -d &quot;${build.directory}/doctrees&quot; source &quot;${build.directory}/${build}&quot;"/>
+    <echo message="Running sphinx-build ${argLine}"/>
+    <exec executable="sphinx-build" failonerror="true" dir="${basedir}">
+      <env key="project.version" value="${project.version}"/>
+      <arg line="${argLine}"/>
+    </exec>
+  </target>
+
+  <target name="autobuild" if="autobuild.available">
+    <local name="argLine"/>
+    <property name="argLine" value="-D release=${project.version} -q -W -b html -d &quot;${build.directory}/doctrees&quot; source &quot;${build.directory}/html&quot;"/>
+    <echo message="Running sphinx-autobuild ${argLine}"/>
+    <exec executable="sphinx-autobuild" failonerror="true" dir="${basedir}">
+      <env key="project.version" value="${project.version}"/>
+      <arg line="${argLine} --open-browser"/>
+    </exec>
+  </target>
+
+</project>
