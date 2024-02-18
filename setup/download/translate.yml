@@ -1,0 +1,23 @@
+# markdown translation
+deepl_base_url: "https://api-free.deepl.com"
+upload_folder: "upload"
+download_folder: "download"
+
+# mkdocs migration
+project_folder: "."
+rst_folder: "source"
+build_folder: "build"
+docs_folder: "docs"
+anchor_file: 'anchors.txt'
+convert_folder: "migrate"
+substitutions:
+  project: MkDocs Translation Example
+  author: Open Source Geospatial Foundation
+  copyright: 2024, Open Source Geospatial Foundation
+  project_copyright: 2024, Open Source Geospatial Foundation
+#  version: {{ version }}
+#  release: {{ release }}
+extlinks:
+  github: https://github.com/jodygarnett/translate/blob/main/%s
+  release: https://github.com/jodygarnett/translate/releases/tag/{{ release }}|Release {{ release }}
+  squidfunk: https://squidfunk.github.io/mkdocs-material/%s

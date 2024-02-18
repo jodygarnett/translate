@@ -1,0 +1,3 @@
+**Inline content**
+
+This is an example of inline content included directly.
