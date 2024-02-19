@@ -132,7 +132,7 @@ def init_anchors():
     logging.debug("anchors loaded:" + str(len(anchors)))
 
 
-def collect_path(path: str, extension: str) -> list[str]:
+def collect_path(path: str, extension: str, include: bool) -> list[str]:
     """
     Collect all the files with an extension from a path.
     If the path is a single file the extension should match.
@@ -140,16 +140,16 @@ def collect_path(path: str, extension: str) -> list[str]:
     files = []
     if '*' in path:
         for file in glob.glob(path, recursive=True):
-            if file.endswith('.' + extension):
+            if file.endswith('.' + extension) == include:
                 files.append(file)
     else:
-        if path.endswith('.' + extension):
+        if path.endswith('.' + extension) == include:
             files.append(path)
 
     return files
 
 
-def collect_paths(paths: list[str], extension: str) -> list[str]:
+def collect_paths(paths: list[str], extension: str, include: bool ) -> list[str]:
     """
     Collect all the files with an extension from a list of paths.
     If the path is a single file the extension should match.
@@ -157,7 +157,7 @@ def collect_paths(paths: list[str], extension: str) -> list[str]:
     files = []
 
     for path in paths:
-        files.extend(collect_path(path, extension))
+        files.extend(collect_path(path, extension, include))
 
     return files
 
@@ -465,7 +465,7 @@ def convert_rst(rst_file: str) -> str:
         raise FileNotFoundError(errno.ENOENT, f"RST file does not exist at location:", rst_file)
 
     if rst_file[-4:] != '.rst':
-        raise FileNotFoundError(errno.ENOENT, f"Rich-structued-text 'rst' extension required:", rst_file)
+        raise FileNotFoundError(errno.ENOENT, f"reStructuredText 'rst' extension required:", rst_file)
 
     # file we are generating
     md_file = rst_file.replace(".rst", ".md").replace(".txt", ".md")

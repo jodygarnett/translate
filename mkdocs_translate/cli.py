@@ -162,6 +162,47 @@ def scan_download( collected: list[str] ):
         with open(download_gitiginore, 'w') as gitignore:
             text = "*\n!download.txt"
             gitignore.write(text)
+
+@app.command()
+def init(
+        rst_path: Annotated[
+            List[str], typer.Argument(help="path to rst source folder")] = mkdocs_translate.translate.rst_folder,
+):
+    """
+    Init docs directory, copying images and files from rst source folder (excluding rst files for migration).
+    """
+    rst_folder = mkdocs_translate.translate.rst_folder
+    docs_folder = mkdocs_translate.translate.docs_folder
+
+    glob: list[str] = []
+
+    if rst_path:
+        # if rst_path provided we are only copying artifacts from a directory
+        if rst_path:
+            for path in rst_path:
+                if os.path.isdir(path) and path.startswith(rst_folder):
+                    glob.append( rst_path + "/**/*.*" )
+                else:
+                    logger.warning(rst_folder+" does not contain folder "+path)
+        else:
+            raise FileNotFoundError(errno.ENOENT, f"RST folder does not exist at location:", rst_path)
+    else:
+        glob.append(mkdocs_translate.translate.rst_folder + "/**/*.*")
+
+    # create docs if required
+    if not os.path.exists(docs_folder):
+        logger.info("Creating docs directory '" + docs_folder + "'")
+        os.makedirs(docs_folder)
+
+    for file in collect_paths(glob, 'rst', False):
+        copy = file.replace(rst_folder, docs_folder,1)
+        if os.path.basename(copy) in ['conf.py']:
+            continue
+
+        shutil.copy2(file, copy)
+        print(copy)
+
+
 @app.command()
 def migrate(
         rst_path: Annotated[
@@ -179,7 +220,7 @@ def migrate(
         rst_glob = mkdocs_translate.translate.rst_folder + "/**/*.rst"
         rst_path = [rst_glob]
 
-    for rst_file in collect_paths(rst_path, 'rst'):
+    for rst_file in collect_paths(rst_path, 'rst', True):
         md_file = convert_rst(rst_file)
         print(md_file)
 

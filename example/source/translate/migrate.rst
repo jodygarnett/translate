@@ -3,28 +3,34 @@ Migrate
 
 .. _preflight:
 
-Preflight Scans
----------------
+Preflight
+---------
 
-1. To effectively migrate content the sphinx-build rst docs are scanned to collect information about the anchors, headings and downloads.
+1. Use init to create :file:`docs` directory and copy over non :file:`rst` files (such as images and sample data).
+
+   .. code-block:: bash
+
+      mkdocs_translate init
+
+2. To effectively migrate content the sphinx-build rst docs are scanned to collect information about the anchors, headings and downloads.
 
    .. code-block:: bash
 
       mkdocs_translate scan
 
-2. Optional: You can run these scans independently:
+3. Optional: You can run these scans independently:
 
    .. code-block:: bash
 
       mkdocs_translate scan downloads.
 
-3. Optional: To troubleshoot an individual file, the resulting `index` can be sent to standard out:
+4. Optional: To troubleshoot an individual file, the resulting `index` can be sent to standard out:
 
    .. code-block:: bash
 
       mkdocs_translate scan download --test source/setup/index.rst
 
-4. The following is produced during preflight scans:
+5. The following is produced during preflight scans:
 
    .. code-block:: text
 
@@ -40,27 +46,13 @@ Content Migration
 
 Format conversion from :command:`sphinx-build` reStructuredText files to :command:`mkdocs` Markdown content.
 
-1. Copy everything over (so all the images and so on are present)
+1. To bulk convert all content from :file:`rst` to :file:`md`:
 
    .. code-block:: bash
 
-      cd geoserver/doc/en/user
-      copy -r source doc
+      mkdocs_translate migrate
 
-2. Clean sphinx-build `conf.py` and ``rst`` files from `docs/` folder.
-
-   .. code-block:: bash
-
-      find doc -type f -regex ".*\.rst" -delete
-      rm doc/conf.py
-
-5. To bulk convert all content from :file:`rst` to :file:`md`:
-
-   .. code-block:: bash
-
-      mkdocs_translate migrate source/**/*.rst
-
-6. Review this content you may find individual files to fix.
+2. Review this content you may find individual files to fix.
 
    Some formatting is easier to fix in the :file:`rst` files before conversion:
 
@@ -70,19 +62,19 @@ Format conversion from :command:`sphinx-build` reStructuredText files to :comman
 
    * Anchors or headings with trailing whitespace throwing off the heading scan, resulting in broken references
 
-7. Convert a single file:
+3. Convert a single file:
 
    .. code-block:: bash
 
-      mkdocs_translate rst source/introduction/license.rst
+      mkdocs_translate migrate source/introduction/license.rst
 
-7. Bulk convert files in a folder:
+4. Bulk convert files in a folder:
 
    .. code-block:: bash
 
-      mkdocs_translate rst source/introduction/**/*.rst
+      mkdocs_translate migrate source/introduction/**/*.rst
 
-8. To generate out navigation tree:
+5. To generate out navigation tree:
 
    .. code-block:: bash
 
