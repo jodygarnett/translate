@@ -258,6 +258,8 @@ reStructured text uses ``downlaod`` directive:
 
    Download text :download:`example.txt <files/example.txt>`.
 
+.. _download_external:
+
 Download of external file
 """""""""""""""""""""""""
 
@@ -336,7 +338,6 @@ reStructuredText does not offer custom icons, the closest is the use of substitu
    ::
 
       [WARNING] Reference not found for 'Key "osgeo_mark"' at build/migrate/guide/markdown.tmp.prep.rst_chunk line 5 column 13
-
 
 
 Figures
@@ -431,7 +432,6 @@ Inline content
 ^^^^^^^^^^^^^^
 
 Use of `mkdocs-include-plugin <https://github.com/mondeja/mkdocs-include-markdown-plugin>`__ provides ability to inline content.
-
 Example project uses following :file:`mkdocs.yml` setup:
 
 .. code-block:: yaml
@@ -446,79 +446,62 @@ The official Material for mkdocs guidance is to use
 :squidfunk:`snippets <setup/extensions/python-markdown-extensions/#snippets>` however this did not offer
 the ability to include code examples and configuration from outside the document tree.
 
-include markdown
-""""""""""""""""
+.. admonition:: Reference
+
+   * `mkdocs-include-markdown-plugin <https://pypi.org/project/mkdocs-include-markdown-plugin/>`__
+   * `mkdocs-exclude <https://pypi.org/project/mkdocs-exclude/>`__
+
+include content
+"""""""""""""""
+
+Inlining a snippet from another file is helpful for material such as disclaimers or statements which are repeated in text.
+
+  Empower everyone with open source geospatial
 
 Here is a snippet to include markdown files inline, requires opening tag ``{%`` and closing tag ``%}``:
 
-.. code-block:: markdown
+.. literalinclude:: include_md.txt
+   :language: markdown
 
-   {%
-      include-markdown './version-4.2.4.md'
-      heading-offset=3
-   %}
-
-Use a glob pattern to inline many files, shown with option to adjusting header level:
-
-.. code-block:: markdown
-
-   {%
-      include-markdown './version-4.0.*.md'
-      exclude = './version-4.2.4.md'
-      heading-offset = 3
-   %}
-
-For including markdown files inline, it is advisable to exclude them from :file:`mkdocs.yml` warnings:
-
-.. code-block:: yaml
-
-   plugins:
-     - exclude:
-         glob:
-           - 'overview/change-log/version*'
+Writers can use ``include-markdown`` with a glob pattern to inline many files, and an option to adjusting header level.
+Together these two features can be used break up longer pages into more manageable size.
 
 This takes the place of the sphinx-build ``include`` directive:
 
-.. code-block:: reStructuredText
+.. literalinclude:: include_rst.txt
+   :language: rst
 
-   .. include:: version-4.2.4.txt
+.. note::
+
+   You may wish to use the :file:`txt` extension for
+   included content. If you wish to use :file:`md` extension you can adjust :file:`mkdocs.yml` ``exclude`` or not
+   ``not_in_nav`` to address warnings.
+
+   .. code-block:: yaml
+
+      plugins:
+        - exclude:
+            glob:
+              - '**/files/*.md'
 
 include config and code
 """""""""""""""""""""""
 
 Including configuration and code examples:
 
-   .. literalinclude:: files/record.xml
-      :language: xml
-      :start-after: <!--start-->
-      :end-before: <!--end-->
-      :dedent:
+   .. code-block:: xml
+
+      <CharacterString>da165110-88fd-11da-a88f-000d939bc5d8</CharacterString>
 
 Use `include` to include normal files, with optional use of start and end markers to capture a snippet, and dedent for appearance.
 In this case we are including content into an xml code block to provide syntax highlighting:
 
-.. code-block:: markdown
-
-   ``` xml
-   {%
-         include 'files/record.xml'
-         dedent="true"
-         start="<!--start-->"
-         end="<!--end-->"
-   %}
-   ```
+.. literalinclude:: include_code_md.txt
+   :language: markdown
+   :dedent:
 
 This takes the place of the sphinx-build ``literal-include`` directive:
 
-.. code-block:: reStructuredText
-
-   .. literalinclude:: files/record.xml
-      :language: xml
-      :start-after: <!--start-->
-      :end-before: <!--end-->
-      :dedent:
-
-.. admonition:: Reference
-
-   * `mkdocs-include-markdown-plugin <https://pypi.org/project/mkdocs-include-markdown-plugin/>`__
-   * `mkdocs-exclude <https://pypi.org/project/mkdocs-exclude/>`__
+.. literalinclude:: include_code_rst.txt
+   :language: rst
+   :dedent:

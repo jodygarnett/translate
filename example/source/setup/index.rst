@@ -89,6 +89,8 @@ Project setup
       hooks:
       - download.py
 
+   .. note:: See writing guide :ref:`download_external` for example on how to use this hook.
+
 7. Define :download:`.gitingore <../../.gitignore>` to avoid adding generated artifacts to version control.
 
    Create :download:`.gitignore <../../.gitignore>`.

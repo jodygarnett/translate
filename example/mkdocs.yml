@@ -21,8 +21,8 @@ theme:
   name: material
   language: en
   custom_dir: overrides
-  logo: assets/images/geoserver_mark.png
-  favicon: assets/images/geoserver_mark.png
+  # logo: assets/images/geoserver_mark.png
+  # favicon: assets/images/geoserver_mark.png
   icon:
     repo: fontawesome/brands/github
   palette:
@@ -129,4 +129,8 @@ not_in_nav: |
   **/download/*.md
 
 nav:
-  - index.md
+  - 'Home': index.md
+  - setup/index.md
+  - 'Translate': translate/index.md
+  - guide/index.md
+  - development/index.md

@@ -1,0 +1,8 @@
+``` xml
+{%
+     include 'files/record.xml'
+     dedent="true"
+     start="<!--start-->"
+     end="<!--end-->"
+%}
+```

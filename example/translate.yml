@@ -15,8 +15,6 @@ substitutions:
   author: Open Source Geospatial Foundation
   copyright: 2024, Open Source Geospatial Foundation
   project_copyright: 2024, Open Source Geospatial Foundation
-#  version: {{ version }}
-#  release: {{ release }}
 extlinks:
   github: https://github.com/jodygarnett/translate/blob/main/%s
   release: https://github.com/jodygarnett/translate/releases/tag/{{ release }}|Release {{ release }}
