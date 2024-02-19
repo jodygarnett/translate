@@ -59,12 +59,10 @@ plugins:
       glob:
         - '**/download/download.txt'
   - include-markdown:
-      # uses {% include: file %}
       preserve_includer_indent: true
       dedent: true
       comments: false
   - macros:
-      # uses {{ variable }} and [[% macro %]] (to avoid conflict with include-markdown plugin)
       render_by_default: false
       on_error_fail: true
       on_undefined: strict
@@ -131,6 +129,12 @@ not_in_nav: |
 nav:
   - 'Home': index.md
   - setup/index.md
-  - 'Translate': translate/index.md
-  - guide/index.md
+  - 'Translate':
+      - translate/index.md
+      - translate/migrate.md
+      - translate/language.md
+  - 'Guide':
+    - guide/index.md
+    - guide/markdown.md
+    - guide/style.md
   - development/index.md

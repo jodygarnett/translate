@@ -1,0 +1,5 @@
+.. literalinclude:: files/record.xml
+   :language: xml
+   :start-after: <!--start-->
+   :end-before: <!--end-->
+   :dedent:
