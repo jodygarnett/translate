@@ -307,29 +307,31 @@ Material for mkDocs has extensive :squidfunk:`icon support <reference/icons-emoj
 Custom icons
 """"""""""""
 
-Custom icons:
+.. |osgeo_mark| image:: img/osgeo_mark.svg
+   :width: 20
+   :height: 20
 
-   .. |osgeo_mark| image:: img/osgeo_mark.svg
-      :width: 20
-      :height: 20
+Custom icons:
 
    |osgeo_mark| Empower everyone with open source geospatial
 
-Material for MkDocs provides support for custom icons, add images to :file:`overrides/.icons/` (yes it is a hidden folder):
+Material for MkDocs provides support for custom icons:
 
 .. code-block:: markdown
 
    :osgeo-logo: Empower everyone with open source geospatial
 
+Add images to :file:`overrides/.icons/` (yes it is a hidden folder)::
+
+   overrides/
+   - .icons/
+     - osgeo/
+       logo.svg
+
 reStructuredText does not offer custom icons, the closest is the use of substitutions to "inline" and image.
 
-.. code-block:: reStructuredText
-
-   .. |osgeo_mark| image:: img/osgeo_mark.svg
-      :width: 20
-      :height: 20
-
-   |osgeo_mark| Empower everyone with open source geospatial
+.. literalinclude:: custom_icon_rst.txt
+   :language: rst
 
 .. warning::
 

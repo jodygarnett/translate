@@ -54,14 +54,9 @@ Project setup
 
    .. literalinclude:: ../../mkdocs.yml
       :language: yaml
+      :end-before: - setup/index.md
 
-4. Create :file:`docs/` folder for markdown content.
-
-   .. code-block:: bash
-
-      mkdir docs
-
-5. Create :file:`build/` folder for temporary files during migration.
+4. Create :file:`build/` folder for temporary files during migration.
 
    .. code-block:: bash
 
@@ -69,14 +64,31 @@ Project setup
 
    .. note:: If converting a :command:`maven` project use of the existing :file:`target/` folder can be configured below.
 
-5. Optional: Create a :download:`translate.yml <../../translate.yml>` to :ref:`configure <config>` script for your project.
+5. Define :download:`.gitingore <../../.gitignore>` to avoid adding generated artifacts to version control.
 
-   .. literalinclude:: ../../translate.yml
-      :language: yaml
+   Create :download:`.gitignore <../../.gitignore>`.
 
-6. Optional: If your content uses `download` directive to include external content, there is a `mkdocs` hook for processing of `download.txt` files.
+   .. literalinclude:: ../../.gitignore
+      :language: text
 
-   Create :download:`download.py <../../download.py>`.
+6. The resulting directory structure is:
+
+   ::
+
+       docs/
+       source/
+       .gitignore
+       download.py
+       mkdocs.yml
+       requirements.txt
+       translate.yaml
+
+Download Hook
+-------------
+
+Optional: If your content uses `download` directive to include external content, there is a `mkdocs` hook for processing of `download.txt` files.
+
+1. Create :download:`download.py <../../download.py>`.
 
    .. literalinclude:: ../../download.py
       :language: python
@@ -91,31 +103,29 @@ Project setup
 
    .. note:: See writing guide :ref:`download_external` for example on how to use this hook.
 
-7. Define :download:`.gitingore <../../.gitignore>` to avoid adding generated artifacts to version control.
+2. Define :download:`.gitingore <../../.gitignore>` to avoid adding generated artifacts to version control.
 
    Create :download:`.gitignore <../../.gitignore>`.
 
    .. literalinclude:: ../../.gitignore
       :language: text
 
-8. The resulting directory structure is:
+3. The resulting directory structure is:
 
    ::
 
        docs/
        source/
-       .gitignore
        download.py
        mkdocs.yml
        requirements.txt
-       translate.yaml
 
 .. _config:
 
 Configuration
 -------------
 
-For simple python :command:`sphinx-build` setup no configuration is required.
+For simple python :command:`sphinx-build` setup and directory structure no configuration is required.
 
 * To provide configuration for your project add a :file:`translate.yml` to the project directory.
 
@@ -125,42 +135,65 @@ For simple python :command:`sphinx-build` setup no configuration is required.
 
      mkdocs_translate --config translate.yml migrate source/index.rst
 
-The file `mkdocs_translate/config.yml` file contains some settings (defaults are shown below):
+To provide configuration for your project:
 
-* `deepl_base_url`: "https://api-free.deepl.com"
+1. Create a :download:`translate.yml <../../translate.yml>` to configure script for your project.
+
+   .. literalinclude:: ../../translate.yml
+      :language: yaml
+
+   .. note:: The example above is for the example project, with ``project`` and ``author`` substitutions.
+      This project also has ``extlinks`` defined that need to be known upfront during migration.
+
+2. Optional: Maven project :download:`translate.yml <./files/translate.yml>` configuration recommendations.
+
+   .. literalinclude:: ./files/translate.yml
+      :language: yaml
+
+3. The resulting directory structure is:
+
+   ::
+
+       docs/
+       source/
+       translate.yml
+       mkdocs.yml
+       requirements.txt
+
+The configuration settings are:
+
+* `deepl_base_url`: ``https://api-free.deepl.com``
 
   Customize if you have a subscription to deepl.
 
-* `project_folder`: "."
+* `project_folder`: ``.``
 
   Default assumes you are running from the current directory.
 
-* `rst_folder`: "source"
+* `rst_folder`: ``source``
 
-* `docs_folder`: "docs"
+* `build_folder`: ``build``
 
-* `build_folder`: "build"
+  The use of ``build`` follows sphinx-build and mkdocs convention, maven projects may wish to use ``target``.
 
-  The use of "target" follows maven convention, maven projects may wish to use `target`.
-
-* `docs_folder`: "docs"
+* `docs_folder`: ``docs``
 
   mkdocs convention.
 
-* `anchor_file`: 'anchors.txt'
+* `anchor_file`: ``anchors.txt``
 
-* `upload_folder`: "upload"
-
-  Combined with ``build_folder`` to stage html files for translation (example:  `build/upload`)
-
-* `convert_folder`: "migrate"
+* `convert_folder`: ``migrate``
 
   Combined with ``build_folder`` for rst conversion temporary files (example:  `build/migrate`).
   Temporary files are required for use by pandoc.
 
+* `upload_folder`: ``upload``
+
+  Combined with ``build_folder`` to stage html files for internationalization (example:  ``build/upload``)
+
 * `download_folder`: "download"
 
-  Combined with ``build_folder`` to retrieve translation results (example:  `build/download`)
+  Combined with ``build_folder`` to retrieve internationalization results (example:  ``build/download``)
   Temporary files are required for use by pandoc.
 
 * `substitutions`: dictionary of `|substitutions|` to use when converting config.py rst_epilog common substitutions.
