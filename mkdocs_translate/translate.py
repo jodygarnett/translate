@@ -90,11 +90,9 @@ def init_config(override_path: str) -> None:
 
     if not os.path.exists(docs_folder):
         logger.debug(f"The docs folder does not exist at location: {docs_folder}")
-        raise FileNotFoundError(errno.ENOENT, f"The docs folder does not exist at location:", docs_folder)
 
     if not os.path.exists(rst_folder):
         logger.debug(f"The rst folder does not exist at location: {rst_folder}")
-        raise FileNotFoundError(errno.ENOENT, f"The rst folder does not exist at location:", rst_folder)
 
     logger.debug('--- start configuration ---')
     logger.debug('docs folder: %s', docs_folder)

@@ -95,6 +95,8 @@ def scan(
     """
     Scan rst files collecting index, download, toc details for migration process.
     """
+    check_folders()
+
     rst_path = mkdocs_translate.translate.rst_folder
     if test:
         download_references: set[str] = scan_download_rst(rst_path, test)
@@ -173,6 +175,9 @@ def init(
     """
     rst_folder = mkdocs_translate.translate.rst_folder
     docs_folder = mkdocs_translate.translate.docs_folder
+    if not os.path.exists(rst_folder):
+        raise FileNotFoundError(errno.ENOENT, f"The rst folder does not exist at location:", rst_folder)
+
 
     glob: list[str] = []
 
@@ -199,9 +204,24 @@ def init(
         if os.path.basename(copy) in ['conf.py']:
             continue
 
+        if not os.path.exists(os.path.dirname(copy)):
+            os.makedirs(os.path.dirname(copy), exist_ok=True)
+
         shutil.copy2(file, copy)
         print(copy)
 
+
+def check_folders():
+    """
+    Check docs and rst folder exist before doing anything else.
+    """
+    rst_folder = mkdocs_translate.translate.rst_folder
+    docs_folder = mkdocs_translate.translate.docs_folder
+    if not os.path.exists(docs_folder):
+        raise FileNotFoundError(errno.ENOENT, f"The docs folder does not exist at location:", docs_folder)
+
+    if not os.path.exists(rst_folder):
+        raise FileNotFoundError(errno.ENOENT, f"The rst folder does not exist at location:", rst_folder)
 
 @app.command()
 def migrate(
@@ -214,6 +234,7 @@ def migrate(
     The rst directives are simplified prior to conversion following our writing guide:
     gui-label, menuselection, file, command
     """
+    check_folders()
     init_anchors()
 
     if not rst_path:
