@@ -1,0 +1,14 @@
+# translate script configuration maven project
+project_folder: "."
+docs_folder: "docs"
+build_folder: "target"
+
+# mkdocs migration
+rst_folder: "source"
+anchor_file: 'anchors.txt'
+convert_folder: "migrate"
+
+# markdown internationalization
+deepl_base_url: "https://api-free.deepl.com"
+upload_folder: "translate"
+download_folder: "translate"

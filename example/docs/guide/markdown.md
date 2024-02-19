@@ -258,13 +258,11 @@ Open-source [**`LICENSE.md`**](download/LICENSE.md)
 
 Create **`download/download.txt`** with list of files to stage during ***mkdocs*** build process:
 
-{% raw %}
 ~~~text
 {% 
   include "./files/download.txt"
 %}
 ~~~
-{% endraw %}
 
 reStructuredText uses `download` directive with relative path (you may starting leading **`/`** to indicate the root of the documentation **`source`** folder):
 

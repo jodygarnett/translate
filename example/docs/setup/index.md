@@ -1,6 +1,6 @@
 ---
 # YAML header
-ignore_macros: true
+render_macros: false
 ---
 
 # Getting started
@@ -56,7 +56,7 @@ A translate script is provided to facilitate working with pandoc and deepl trans
     ~~~yaml
     {% 
       include "../../mkdocs.yml"
-      end="- setup/index.md"
+       end="- setup/index.md"
     %}
     ~~~
 
@@ -70,17 +70,31 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 
         If converting a ***maven*** project use of the existing **`target/`** folder can be configured below.
 
-5.  Optional: Create a [translate.yml](../../translate.yml) to [configure](index.md#config) script for your project.
+5.  Define [.gitingore](../../.gitignore) to avoid adding generated artifacts to version control.
 
-    ~~~yaml
+    Create [.gitignore](../../.gitignore).
+
+    ~~~text
     {% 
-      include "../../translate.yml"
+      include "../../.gitignore"
     %}
     ~~~
 
-6.  Optional: If your content uses `ad` directive to include external content, there is a `cs` hook for processing of ``download.txt`` files.
+6.  The resulting directory structure is:
 
-    Create [download.py](../../download.py).
+        docs/
+        source/
+        .gitignore
+        download.py
+        mkdocs.yml
+        requirements.txt
+        translate.yaml
+
+## Download Hook
+
+Optional: If your content uses `ad` directive to include external content, there is a `cs` hook for processing of ``download.txt`` files.
+
+1.  Create [download.py](../../download.py).
 
     ~~~python
     {% 
@@ -100,7 +114,7 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 
         See writing guide [Download of external file](../guide/markdown.md#download_external) for example on how to use this hook.
 
-8.  Define [.gitingore](../../.gitignore) to avoid adding generated artifacts to version control.
+2.  Define [.gitingore](../../.gitignore) to avoid adding generated artifacts to version control.
 
     Create [.gitignore](../../.gitignore).
 
@@ -110,19 +124,17 @@ A translate script is provided to facilitate working with pandoc and deepl trans
     %}
     ~~~
 
-9.  The resulting directory structure is:
+3.  The resulting directory structure is:
 
         docs/
         source/
-        .gitignore
         download.py
         mkdocs.yml
         requirements.txt
-        translate.yaml
 
 ## Configuration {: #config }
 
-For simple python ***sphinx-build*** setup no configuration is required.
+For simple python ***sphinx-build*** setup and directory structure no configuration is required.
 
 -   To provide configuration for your project add a **`translate.yml`** to the project directory.
 
@@ -132,41 +144,69 @@ For simple python ***sphinx-build*** setup no configuration is required.
     mkdocs_translate --config translate.yml migrate source/index.rst
     ```
 
-The file ``mkdocs_translate/config.yml`` file contains some settings (defaults are shown below):
+To provide configuration for your project:
 
--   `rl`: "<https://api-free.deepl.com>"
+1.  Create a [translate.yml](../../translate.yml) to configure script for your project.
+
+    ~~~yaml
+    {% 
+      include "../../translate.yml"
+    %}
+    ~~~
+
+    !!! note
+
+        The example above is for the example project, with `project` and `author` substitutions. This project also has `extlinks` defined that need to be known upfront during migration.
+
+2.  Optional: Maven project [translate.yml](./files/translate.yml) configuration recommendations.
+
+    ~~~yaml
+    {% 
+      include "./files/translate.yml"
+    %}
+    ~~~
+
+3.  The resulting directory structure is:
+
+        docs/
+        source/
+        translate.yml
+        mkdocs.yml
+        requirements.txt
+
+The configuration settings are:
+
+-   `rl`: `https://api-free.deepl.com`
 
     Customize if you have a subscription to deepl.
 
--   `er`: "."
+-   `er`: `.`
 
     Default assumes you are running from the current directory.
 
--   `er`: "source"
+-   `er`: `source`
 
--   `er`: "docs"
+-   `er`: `build`
 
--   `er`: "build"
+    The use of `build` follows sphinx-build and mkdocs convention, maven projects may wish to use `target`.
 
-    The use of "target" follows maven convention, maven projects may wish to use `et`.
-
--   `er`: "docs"
+-   `er`: `docs`
 
     mkdocs convention.
 
--   `le`: 'anchors.txt'
+-   `le`: `anchors.txt`
 
--   `er`: "upload"
-
-    Combined with `build_folder` to stage html files for translation (example: ``build/upload``)
-
--   `er`: "migrate"
+-   `er`: `migrate`
 
     Combined with `build_folder` for rst conversion temporary files (example: ``build/migrate``). Temporary files are required for use by pandoc.
 
+-   `er`: `upload`
+
+    Combined with `build_folder` to stage html files for internationalization (example: `build/upload`)
+
 -   `er`: "download"
 
-    Combined with `build_folder` to retrieve translation results (example: ``build/download``) Temporary files are required for use by pandoc.
+    Combined with `build_folder` to retrieve internationalization results (example: `build/download`) Temporary files are required for use by pandoc.
 
 -   `ns`: dictionary of ``|substitutions|`` to use when converting config.py rst_epilog common substitutions.
 
@@ -189,7 +229,6 @@ The file ``mkdocs_translate/config.yml`` file contains some settings (defaults a
     ```
 
 -   `ks`: dictionary of config.py extlinks substitutions taking the form:
-
 
     ``` 
     extlinks:
@@ -215,3 +254,7 @@ The file ``mkdocs_translate/config.yml`` file contains some settings (defaults a
        'download_release': ('https://sourceforge.net/projects/geoserver/files/GeoServer/' + release + '/geoserver-' + release + '-%s.zip', 'geoserver-' + release + '-%s.zip )
     }
     ```
+
+-   'macro_ignore': Use of ``mkdocs-macros-plugin`` can conflict with code examples.
+
+    This script adds the YAML header to enable macros to better support the use ``{{ version }}`` and ``{{ release }}``. If you find this accidentially is triggered by code examples you can add an ignore.

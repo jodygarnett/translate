@@ -1,7 +1,3 @@
----
-render_macros: true
----
-
 # MkDocs Translate Example
 
 Translation example for `te` script [Release {{ release }}](https://github.com/jodygarnett/translate/releases/tag/{{ release }}).
