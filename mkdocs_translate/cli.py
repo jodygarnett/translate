@@ -105,7 +105,7 @@ def scan(
 
     rst_glob = rst_path + "/**/*.rst"
 
-    collected = collect_path(rst_glob, 'rst')
+    collected = collect_path(rst_glob, 'rst', True)
     logger.info("Scanning " + str(len(collected)) + " files")
 
     if scan.lower() in ("all","index"):

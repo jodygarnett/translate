@@ -244,3 +244,7 @@ The configuration settings are:
         'download_release': ('https://sourceforge.net/projects/geoserver/files/GeoServer/' + release + '/geoserver-' + release + '-%s.zip', 'geoserver-' + release + '-%s.zip )
      }
 
+* 'macro_ignore': Use of `mkdocs-macros-plugin` can conflict with code examples.
+
+  This script adds the YAML header to enable macros to better support the use `{{ version }}` and `{{ release }}`.
+  If you find this accidentially is triggered by code examples you can add an ignore.

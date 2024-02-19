@@ -1316,7 +1316,12 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     # add header if needed to process mkdocs extra variables
     MACRO = re.compile(r'\{\{ .* \}\}',flags=re.MULTILINE)
     if MACRO.search(clean):
-        clean = '---\nrender_macros: true\n---\n\n' + clean
+        if 'macro_ignore' in config:
+            ignore_check = os.path.relpath(md_file,convert_folder).replace('.tmp.md','.md')
+            if ignore_check in config['macro_ignore']:
+                clean = '---\n# YAML header\nrender_macros: false\n---\n\n' + clean
+        else:
+            clean = '---\nrender_macros: true\n---\n\n' + clean
 
     with open(md_clean, 'w') as markdown:
         markdown.write(clean)
