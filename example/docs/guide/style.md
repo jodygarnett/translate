@@ -1,4 +1,4 @@
-# Style Guide {: #style }
+# Style Guide
 
 Writing style guide to help creating consistent documentation.
 

@@ -14,24 +14,45 @@
     mkdocs_translate scan
     ```
 
-3.  Optional: You can run these scans independently:
+3.  The following is produced during preflight scans:
 
-    ``` bash
-    mkdocs_translate scan downloads.
+    ``` text
+    build/migrate/anchors.txt
+    docs/download/download.txt
+    docs/guide/download/download.txt
+    docs/setup/download/download.txt
     ```
 
-4.  Optional: To troubleshoot an individual file, the resulting `ex` can be sent to standard out:
+Troubleshooting:
+
+-   You can run these scans independently:
+
+    ``` bash
+    mkdocs_translate scan download
+    ```
+
+-   To troubleshoot an individual file, the resulting `index`can be sent to standard out:
 
     ``` bash
     mkdocs_translate scan download --test source/setup/index.rst
     ```
 
-5.  The following is produced during preflight scans:
+## Navigation
 
-    ``` text
-    docs/setup/download/download.txt
-    build/anchors.txt
+1.  To generate out navigation tree:
+
+    ``` bash
+    mkdocs_translate scan toc
     ```
+
+2\. The output is printed to standard out and may be appended to **`mkdocs.yml`** file.
+
+> ~~~yaml
+> {% 
+>   include "../../mkdocs.yml"
+>    start="# Page tree"
+> %}
+> ~~~
 
 ## Content Migration {: #migrate }
 
@@ -51,25 +72,19 @@ Format conversion from ***sphinx-build*** reStructuredText files to ***mkdocs***
     -   Random `{.title-ref}` snippets is a general indication to simplify the rst and re-translate.
     -   Anchors or headings with trailing whitespace throwing off the heading scan, resulting in broken references
 
-3.  Convert a single file:
+Troubleshooting:
+
+-   Convert a single file:
 
     ``` bash
     mkdocs_translate migrate source/introduction/license.rst
     ```
 
-4.  Bulk convert files in a folder:
+-   Bulk convert files in a folder:
 
     ``` bash
     mkdocs_translate migrate source/introduction/**/*.rst
     ```
-
-5.  To generate out navigation tree:
-
-    ``` bash
-    mkdocs_translate scan toc
-    ```
-
-    The output is printed to standard out and may be appended to **`mkdocs.yml`** file.
 
 ## Known limitations
 

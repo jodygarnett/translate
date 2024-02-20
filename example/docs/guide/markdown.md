@@ -18,27 +18,27 @@ These markdown conventions are carefully constructed for consistent representati
 
 ## User interface components
 
-Use ``**strong**`` to name user interface components for interaction (press for buttons, click for link).
+Use `**strong**`to name user interface components for interaction (press for buttons, click for link).
 
 Preview:
 
 > Navigate to **Data --> Layers** page, and press **Add** to create a new layer.
 
-Markdown uses `**strong**`:
+Markdown uses `**strong**`
 
 ``` markdown
 Navigate to **Data > Layers** page,
 and press **Add** to create a new layer.
 ```
 
-Rich structured text uses `on` and `el` directives:
+Rich structured text uses `menuselection`and `guilabel`directives:
 
 ``` reStructuredText
 Navigate to **Data --> Layers** page,
 and press **Add** to create a new layer.
 ```
 
-## User input
+## Selected input
 
 Use `item` for user selected input, or item in a list or tree:
 
@@ -49,7 +49,7 @@ Preview:
 Markdown uses monospace:
 
 ``` markdown
-Select ``ap`` layer.
+Select ``Basemap``layer.
 ```
 
 Rich structured text uses monospace:
@@ -58,16 +58,18 @@ Rich structured text uses monospace:
 Select ``Basemap`` layer.
 ```
 
+## Input text
+
 Use `monospace` for user supplied text input:
 
 Preview:
 
-> Use the **Search** field to enter: `n*`
+> Use the **Search** field to enter: `Ocean*`
 
 Markdown uses monospace:
 
 ``` markdown
-Use the **Search** field enter: ``n*``
+Use the **Search** field enter: ``Ocean*``
 ```
 
 Rich structured text uses `kbd` directive:
@@ -76,11 +78,13 @@ Rich structured text uses `kbd` directive:
 Use the **Search** field to enter: ``Ocean*``
 ```
 
+## Keypress
+
 Use `key` directive for keyboard keys.
 
 Preview:
 
-> Press ``Control-s`` to search.
+> Press `Control-s`to search.
 
 Markdown uses **mkdocs-material** [keys](https://squidfunk.github.io/mkdocs-material/reference/formatting/#adding-keyboard-keys) formatting:
 
@@ -91,8 +95,10 @@ Press ++control+s++ to search.
 Rich structured text:
 
 ``` reStructuredText
-Press `Control-s` to search.
+Press ``Control-s``to search.
 ```
+
+## Form input
 
 Use definition list to document data entry. The field names use strong as they name a user interface element. Field values to input uses monspace as user input to type in.
 
@@ -100,13 +106,17 @@ Preview:
 
 1.  To login as the GeoServer administrator using the default password:
 
-      --------------------- -------------------------------------------------
-      User:                 `in`
+    User:
 
-      Password:             `er`
+    :   `admin`
 
-      Remember me           Unchecked
-      --------------------- -------------------------------------------------
+    Password:
+
+    :   `geoserver`
+
+    Remember me
+
+    :   Unchecked
 
     Press **Login**.
 
@@ -117,11 +127,11 @@ Markdown: definition lists
 
     **User**
 
-    :   ``in``
+    :   ``admin``
 
     **Password**
 
-    :   ``er``
+    :   ``geoserver``
 
     **Remember me**
 
@@ -141,10 +151,8 @@ Rich structured text: list-table
       :stub-columns: 1
 
       * - User:
-        - ``in``
-      * - Password:
-        - ``er``
-      * - Remember me
+        - ``admin``         * - Password:
+        - ``geoserver``         * - Remember me
         - Unchecked
 
    Press **Login**.
@@ -161,7 +169,7 @@ Preview:
 Markdown:
 
 ``` markdown
-Launch ***pgAdmin*** and connect to the ``al`` database.
+Launch ***pgAdmin*** and connect to the ``tutorial``database.
 ```
 
 Rich structured text uses `command` directive:
@@ -220,7 +228,7 @@ Sample file included in the documentation:
 
 > Download schema [example.txt](files/example.txt).
 
-Markdown relative link, with text following **bold** with `ce` file convention above:
+Markdown relative link, with text following **bold** with `monospace`file convention above:
 
 ``` markdown
 Download text [**`example.txt`**](files/example.txt).
@@ -246,7 +254,7 @@ To include sample file from outside of the documentation tree:
 
 !!! note
 
-    This functionality is not supported by Material for mkdocs (or any plugin I could find). It is accomplished using the **`download.py`** hook described in [Project setup](../setup/index.md#setup)
+    This functionality is not supported by Material for mkdocs (or any plugin I could find). It is accomplished using the **`download.py`** hook described in [setup](../setup/index.md#download_hook).
 
 To use **`download.py`** hook, create a **`download`** folder to hold staged files
 
@@ -374,7 +382,7 @@ reStructuredText has an `image` directive:
 
 Material for MkDocs :squidfunk\`data tables \<reference/data-tables/\>\` use pipe-tables approach (supported by both **\*mkdocs**\* and **\*pandoc**\*):
 
-Leading `|` tailing `|`:
+Leading `` |` tailing ``\`:
 
 ``` markdown
 | First Header | Second Header | Third Header |
@@ -383,7 +391,7 @@ Leading `|` tailing `|`:
 | Content Cell | Content Cell  | Content Cell |
 ```
 
-Column alignment using `:`
+Column alignment using ``:``
 
 ``` markdown
 | First Header | Second Header | Third Header |
@@ -458,7 +466,7 @@ Including configuration and code examples:
 > <CharacterString>da165110-88fd-11da-a88f-000d939bc5d8</CharacterString>
 > ```
 
-Use `de` to include normal files, with optional use of start and end markers to capture a snippet, and dedent for appearance. In this case we are including content into an xml code block to provide syntax highlighting:
+Use `include`to include normal files, with optional use of start and end markers to capture a snippet, and dedent for appearance. In this case we are including content into an xml code block to provide syntax highlighting:
 
 ``` raw_markdown
 ~~~markdown
