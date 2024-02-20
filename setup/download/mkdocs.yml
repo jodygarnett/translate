@@ -77,8 +77,8 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: ttps://github.com/jodygarnett/translate
-  version: '1.0'
-  release: '1.0.0'
+  version: '0.9'
+  release: '0.9'
 
 # Extensions
 # - These are carefully chosen to work with pandoc markdown support for whole document translation
