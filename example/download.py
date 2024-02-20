@@ -16,6 +16,8 @@ def on_pre_build(config, **kwargs):
 
     for download_txt in glob.glob(pattern, recursive=True):
         download_folder = os.path.dirname(download_txt)
+        donload_txt_path = os.path.relpath(download_txt,docs_dir)
+        log.info(f"Download {donload_txt_path} ...")
         with open(download_txt, 'r') as file:
             path_list = file.read()
 
@@ -28,5 +30,7 @@ def on_pre_build(config, **kwargs):
                 if not os.path.exists(dest) or (os.stat(resolved).st_mtime - os.stat(dest).st_mtime > 1):
                     print(f"Download {dest}")
                     shutil.copyfile(resolved, dest, follow_symlinks=True)
+                else:
+                    log.info(f"Download '{resolved}' up to date")
             else:
                 log.warning(f"Download '{resolved}' not found")

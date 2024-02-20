@@ -399,12 +399,11 @@ def scan_download_rst(base_path: str, rst_file: str) -> set[str]:
     with open(rst_file, 'r') as file:
         text = file.read()
 
-    relative_path = rst_file[len(base_path):]
-    doc = relative_path
-    downloads: set[str] = set()
 
-    with open(rst_file, 'r') as file:
-        text = file.read()
+    if ":download:" not in text:
+        return set()
+
+    downloads: set[str] = set()
 
     # download links processed in order from most to least complicated
     # :download:`normal <link>`
@@ -418,18 +417,20 @@ def scan_download_rst(base_path: str, rst_file: str) -> set[str]:
         downloads.add(match[1])
 
     # only index external downloads
+    relative_path = os.path.relpath(rst_file,base_path)
+
     external_downloads: set[str] = set()
-    path = os.path.dirname(rst_file)
+
     for download in downloads:
         if download[0:1] == '/':
             # sphinx-build leading slash indicates root of source folder
             download = download[1:]
-            for _ in range(path.count('/') - 1):
+            for _ in range(relative_path.count('/') - 1):
                 download = '../' + download
 
-        if (path.count('/') < download.count('../')):
+        if (relative_path.count('/') < download.count('../')):
             # external download link, copy required
-            download = '../../' + download
+            download = '../' + download
             external_downloads.add(download)
 
     return external_downloads
