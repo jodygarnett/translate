@@ -549,9 +549,9 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
     if '.. contents::' in text:
         text = _preprocess_rst_strip(rst_file, text, 'contents')
 
-    # if text.startswith('.. _'):
-    #     text = text.split('\n',2
-    #                       )[2]
+    # strip leading anchor as it causes trouble with nav title
+    if text.startswith('.. _'):
+        text = text.split('\n',2)[2]
 
     # gui-label and menuselection represented: **Cancel**
     text = re.sub(
@@ -596,8 +596,8 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
 
     # very simple literals: `some text` should use ``some text``
     text = re.sub(
-        r"(\s)`(\w|\s)*([^`])`([^`])",
-        r"\1``\2\3``\4",
+        r"(\s)`([^`])(.+?)`[^_]",
+        r"\1``\2\3``",
         text,
         flags=re.MULTILINE
     )

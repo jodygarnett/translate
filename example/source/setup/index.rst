@@ -81,7 +81,8 @@ Project setup
        download.py
        mkdocs.yml
        requirements.txt
-       translate.yaml
+
+.. _download_hook:
 
 Download Hook
 -------------
@@ -93,7 +94,7 @@ Optional: If your content uses `download` directive to include external content,
    .. literalinclude:: ../../download.py
       :language: python
 
-   Register hook with `mkdocs.yml`:
+2. Register hook with `mkdocs.yml`:
 
    .. code-block:: yaml
 
@@ -103,14 +104,7 @@ Optional: If your content uses `download` directive to include external content,
 
    .. note:: See writing guide :ref:`download_external` for example on how to use this hook.
 
-2. Define :download:`.gitingore <../../.gitignore>` to avoid adding generated artifacts to version control.
-
-   Create :download:`.gitignore <../../.gitignore>`.
-
-   .. literalinclude:: ../../.gitignore
-      :language: text
-
-3. The resulting directory structure is:
+2. The resulting directory structure is:
 
    ::
 
@@ -156,29 +150,26 @@ To provide configuration for your project:
 
        docs/
        source/
+       .gitignore
        translate.yml
        mkdocs.yml
        requirements.txt
 
 The configuration settings are:
 
-* `deepl_base_url`: ``https://api-free.deepl.com``
-
-  Customize if you have a subscription to deepl.
-
-* `project_folder`: ``.``
+* ``project_folder``: ``.``
 
   Default assumes you are running from the current directory.
 
-* `rst_folder`: ``source``
+* `docs_folder`: ``docs``
+
+  mkdocs convention.
 
 * `build_folder`: ``build``
 
   The use of ``build`` follows sphinx-build and mkdocs convention, maven projects may wish to use ``target``.
 
-* `docs_folder`: ``docs``
-
-  mkdocs convention.
+* `rst_folder`: ``source``
 
 * `anchor_file`: ``anchors.txt``
 
@@ -191,7 +182,13 @@ The configuration settings are:
 
   Combined with ``build_folder`` to stage html files for internationalization (example:  ``build/upload``)
 
-* `download_folder`: "download"
+Internationalization configuration options:
+
+* ``deepl_base_url``: ``https://api-free.deepl.com``
+
+  Customize if you have a subscription to deepl.
+
+* `download_folder`: ``download``
 
   Combined with ``build_folder`` to retrieve internationalization results (example:  ``build/download``)
   Temporary files are required for use by pandoc.

@@ -18,26 +18,43 @@ Preflight
 
       mkdocs_translate scan
 
-3. Optional: You can run these scans independently:
-
-   .. code-block:: bash
-
-      mkdocs_translate scan downloads.
-
-4. Optional: To troubleshoot an individual file, the resulting `index` can be sent to standard out:
-
-   .. code-block:: bash
-
-      mkdocs_translate scan download --test source/setup/index.rst
-
-5. The following is produced during preflight scans:
+3. The following is produced during preflight scans:
 
    .. code-block:: text
 
+      build/migrate/anchors.txt
+      docs/download/download.txt
+      docs/guide/download/download.txt
       docs/setup/download/download.txt
-      build/anchors.txt
 
-   .. build/nav.yaml
+Troubleshooting:
+
+* You can run these scans independently:
+
+  .. code-block:: bash
+
+     mkdocs_translate scan download
+
+* To troubleshoot an individual file, the resulting `index` can be sent to standard out:
+
+  .. code-block:: bash
+
+     mkdocs_translate scan download --test source/setup/index.rst
+
+Navigation
+----------
+
+1. To generate out navigation tree:
+
+   .. code-block:: bash
+
+      mkdocs_translate scan toc
+
+2. The output is printed to standard out and may be appended to :file:`mkdocs.yml` file.
+
+   .. literalinclude:: ../../mkdocs.yml
+      :language: yaml
+      :start-after: # Page tree
 
 .. _migrate:
 
@@ -62,25 +79,19 @@ Format conversion from :command:`sphinx-build` reStructuredText files to :comman
 
    * Anchors or headings with trailing whitespace throwing off the heading scan, resulting in broken references
 
-3. Convert a single file:
+Troubleshooting:
 
-   .. code-block:: bash
+* Convert a single file:
 
-      mkdocs_translate migrate source/introduction/license.rst
+  .. code-block:: bash
 
-4. Bulk convert files in a folder:
+     mkdocs_translate migrate source/introduction/license.rst
 
-   .. code-block:: bash
+* Bulk convert files in a folder:
 
-      mkdocs_translate migrate source/introduction/**/*.rst
+  .. code-block:: bash
 
-5. To generate out navigation tree:
-
-   .. code-block:: bash
-
-      mkdocs_translate scan toc
-
-   The output is printed to standard out and may be appended to :file:`mkdocs.yml` file.
+     mkdocs_translate migrate source/introduction/**/*.rst
 
 Known limitations
 -----------------

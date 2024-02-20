@@ -45,8 +45,8 @@ Rich structured text uses `menuselection` and `guilabel` directives:
    Navigate to :menuselection:`Data --> Layers` page,
    and press :guilabel:`Add` to create a new layer.
 
-User input
-^^^^^^^^^^
+Selected input
+^^^^^^^^^^^^^^
 
 Use \`item\` for user selected input, or item in a list or tree:
 
@@ -66,6 +66,9 @@ Rich structured text uses monospace:
 
    Select ``Basemap`` layer.
 
+Input text
+^^^^^^^^^^
+
 Use ``monospace`` for user supplied text input:
 
 Preview:
@@ -83,6 +86,9 @@ Rich structured text uses ``kbd`` directive:
 .. code-block:: reStructuredText
 
    Use the :guilabel:`Search` field to enter: ``Ocean*``
+
+Keypress
+^^^^^^^^
 
 Use ``key`` directive for keyboard keys.
 
@@ -102,23 +108,23 @@ Rich structured text:
 
    Press :kbd:`Control-s` to search.
 
+Form input
+^^^^^^^^^^
+
 Use definition list to document data entry. The field names use strong as they name a user interface element. Field values to input uses monspace as user input to type in.
 
 Preview:
 
 #. To login as the GeoServer administrator using the default password:
 
-   .. list-table::
-      :widths: 30 70
-      :width: 100%
-      :stub-columns: 1
+   User:
+      :kbd:`admin`
 
-      * - User:
-        - :kbd:`admin`
-      * - Password:
-        - :kbd:`geoserver`
-      * - Remember me
-        - Unchecked
+   Password:
+       :kbd:`geoserver`
+
+   Remember me
+       Unchecked
 
    Press :guilabel:`Login`.
 
@@ -132,9 +138,11 @@ Markdown: definition lists
 
        :   `admin`
 
+
        **Password**
 
        :   `geoserver`
+
 
        **Remember me**
 
@@ -270,7 +278,7 @@ To include sample file from outside of the documentation tree:
 .. note::
 
    This functionality is not supported by Material for mkdocs (or any plugin I could find).
-   It is accomplished using the :file:`download.py` hook described in :ref:`setup`
+   It is accomplished using the :file:`download.py` hook described in :ref:`setup <download_hook>`.
 
 To use :file:`download.py` hook, create a :file:`download` folder to hold staged files
 

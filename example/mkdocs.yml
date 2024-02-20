@@ -122,10 +122,10 @@ validation:
     absolute_links: info
     unrecognized_links: info
 
-# Page tree
 not_in_nav: |
   **/download/*.md
 
+# Page tree
 nav:
   - 'Home': index.md
   - setup/index.md
