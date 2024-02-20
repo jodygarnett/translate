@@ -1,0 +1,5 @@
+.. |osgeo_mark| image:: img/osgeo_mark.svg
+   :width: 20
+   :height: 20
+
+|osgeo_mark| Empower everyone with open source geospatial
