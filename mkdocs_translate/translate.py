@@ -440,13 +440,16 @@ def _download_path(path: str, download: str) -> str:
     Generate a relative link, or download folder for external content.
     """
     reference = download
+    if reference[0:2] == './':
+        reference = reference[2:]
+
     if reference[0:1] == '/':
         # sphinx-build leading slash indicates root of source folder
         reference = reference[1:]
         for _ in range(path.count('/') - 1):
             reference = '../' + reference
 
-    if (path.count('/') < reference.count('../')):
+    if (path.count('/') - 1 < reference.count('../')):
         return os.path.join("download",os.path.basename(download))
     else:
         return reference

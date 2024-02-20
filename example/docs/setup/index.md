@@ -43,7 +43,7 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 
 1.  A working [example](https://github.com/jodygarnett/translate/blob/main/example) is provided to be adapted for your project.
 
-2.  Create [requirements.txt](../../requirements.txt) with mkdocs plugins required.
+2.  Create [requirements.txt](download/requirements.txt) with mkdocs plugins required.
 
     ~~~text
     {% 
@@ -51,7 +51,7 @@ A translate script is provided to facilitate working with pandoc and deepl trans
     %}
     ~~~
 
-3.  Create [mkdocs.yml](../../mkdocs.yml), the navigation tree is initially empty.
+3.  Create [mkdocs.yml](download/mkdocs.yml), the navigation tree is initially empty.
 
     ~~~yaml
     {% 
@@ -70,9 +70,7 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 
         If converting a ***maven*** project use of the existing **`target/`** folder can be configured below.
 
-5.  Define [.gitingore](../../.gitignore) to avoid adding generated artifacts to version control.
-
-    Create [.gitignore](../../.gitignore).
+5.  Define **`.gitingore`** to avoid adding generated artifacts to version control.
 
     ~~~text
     {% 
@@ -93,7 +91,7 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 
 Optional: If your content uses `download`directive to include external content, there is a `mkdocs`hook for processing of `download.txt`files.
 
-1.  Create [download.py](../../download.py).
+1.  Create [download.py](download/download.py).
 
     ~~~python
     {% 
@@ -127,7 +125,7 @@ For simple python ***sphinx-build*** setup and directory structure no configurat
 
 Optional: To provide configuration for your project:
 
-1.  Create a [translate.yml](../../translate.yml) to configure script for your project.
+1.  Create a [translate.yml](download/translate.yml) to configure script for your project.
 
     ~~~yaml
     {% 
@@ -139,7 +137,7 @@ Optional: To provide configuration for your project:
 
         The example above is for the example project, with `project` and `author` substitutions. This project also has `extlinks` defined that need to be known upfront during migration.
 
-2.  Optional: Maven project [translate.yml](./files/translate.yml) configuration recommendations.
+2.  Optional: Maven project [translate.yml](files/translate.yml) configuration recommendations.
 
     ~~~yaml
     {% 
