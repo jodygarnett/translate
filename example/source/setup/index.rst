@@ -121,15 +121,7 @@ Configuration
 
 For simple python :command:`sphinx-build` setup and directory structure no configuration is required.
 
-* To provide configuration for your project add a :file:`translate.yml` to the project directory.
-
-* To override configuration on command line add `-config <file.yml>` before the command:
-
-  .. code-block:: bash
-
-     mkdocs_translate --config translate.yml migrate source/index.rst
-
-To provide configuration for your project:
+Optional: To provide configuration for your project:
 
 1. Create a :download:`translate.yml <../../translate.yml>` to configure script for your project.
 
@@ -157,43 +149,37 @@ To provide configuration for your project:
 
 The configuration settings are:
 
-* ``project_folder``: ``.``
-
+``project_folder``: ``.``
   Default assumes you are running from the current directory.
 
-* `docs_folder`: ``docs``
-
+`docs_folder`: ``docs``
   mkdocs convention.
 
-* `build_folder`: ``build``
-
+`build_folder`: ``build``
   The use of ``build`` follows sphinx-build and mkdocs convention, maven projects may wish to use ``target``.
 
-* `rst_folder`: ``source``
+`rst_folder`: ``source``
+  Location of sphinx-build documentation to migrate to mkdocs.
 
-* `anchor_file`: ``anchors.txt``
+`anchor_file`: ``anchors.txt``
+  Name of index file used to lookup anchor and title information during migration.
 
-* `convert_folder`: ``migrate``
-
+`convert_folder`: ``migrate``
   Combined with ``build_folder`` for rst conversion temporary files (example:  `build/migrate`).
   Temporary files are required for use by pandoc.
 
-* `upload_folder`: ``upload``
-
+`upload_folder`: ``upload``
   Combined with ``build_folder`` to stage html files for internationalization (example:  ``build/upload``)
 
-Internationalization configuration options:
-
-* ``deepl_base_url``: ``https://api-free.deepl.com``
-
+``deepl_base_url``: ``https://api-free.deepl.com``
   Customize if you have a subscription to deepl.
 
-* `download_folder`: ``download``
-
+`download_folder`: ``download``
   Combined with ``build_folder`` to retrieve internationalization results (example:  ``build/download``)
   Temporary files are required for use by pandoc.
 
-* `substitutions`: dictionary of `|substitutions|` to use when converting config.py rst_epilog common substitutions.
+`substitutions`:
+  dictionary of `|substitutions|` to use when converting config.py rst_epilog common substitutions.
 
   .. code-block:: yaml
 
@@ -202,7 +188,7 @@ Internationalization configuration options:
      copyright: 2023, Open Source Geospatial Foundation
      project_copyright: 2023, Open Source Geospatial Foundation
 
-* The built-in substitutions for  `|version|` and `|release|` are changed to ``{{ version }}`` and ``{{ release }}``
+  The built-in substitutions for  `|version|` and `|release|` are changed to ``{{ version }}`` and ``{{ release }}``
   variables for use with `mkdocs-macros-plugin` variable substitution:
 
   Use :file:`mkdocs.yml` to define these variable substitutions:
@@ -214,7 +200,8 @@ Internationalization configuration options:
        version: '2.24'
        release: '2.24.2'
 
-* `extlinks`: dictionary of config.py extlinks substitutions taking the form:
+`extlinks`:
+  dictionary of config.py extlinks substitutions taking the form:
 
   .. code-block::
 
@@ -241,7 +228,8 @@ Internationalization configuration options:
         'download_release': ('https://sourceforge.net/projects/geoserver/files/GeoServer/' + release + '/geoserver-' + release + '-%s.zip', 'geoserver-' + release + '-%s.zip )
      }
 
-* 'macro_ignore': Use of `mkdocs-macros-plugin` can conflict with code examples.
+`macro_ignore`:
+  Use of `mkdocs-macros-plugin` can conflict with code examples.
 
   This script adds the YAML header to enable macros to better support the use `{{ version }}` and `{{ release }}`.
   If you find this accidentially is triggered by code examples you can add an ignore.
