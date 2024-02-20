@@ -104,21 +104,21 @@ Use definition list to document data entry. The field names use strong as they n
 
 Preview:
 
-1.  To login as the GeoServer administrator using the default password:
-
-    User:
-
-    :   `admin`
-
-    Password:
-
-    :   `geoserver`
-
-    Remember me
-
-    :   Unchecked
-
-    Press **Login**.
+> 1.  To login as the GeoServer administrator using the default password:
+>
+>     User:
+>
+>     :   `admin`
+>
+>     Password:
+>
+>     :   `geoserver`
+>
+>     Remember me
+>
+>     :   Unchecked
+>
+>     Press **Login**.
 
 Markdown: definition lists
 
@@ -328,21 +328,33 @@ Figures are used frequently to allow a caption to describe screen shots and diag
 > ![](img/foss4g.svg)
 > *Free and Open Source Software for Geospatial*
 
-Markdown handles figures are handled by convention adding emphasized text after each image, and trust CSS rules to provide a consistent presentation:
+Markdown handles figures are handled by convention adding emphasized text after each image.
 
 ``` markdown
 ![FOSS4G](img/foss4g.svg)
 *Free and Open Source Software for Geospatial*
 ```
 
-The official Material for MkDocs answer for :squidfunk\`images with captions \<reference/images/#image-captions\>`` is to use ````md_in_html``\` extension:
+!!! note
 
-``` markdown
-<figure markdown="span">
-  ![FOSS4G](img/foss4g.svg){ scale="25%" }
-  <figcaption>Free and Open Source Software for Geospatial</figcaption>
-</figure>
-```
+    The convention above depends on CSS rules in **`overrides/assets/stylesheets/extra.css`** to provide a consistent presentation:
+    
+    ~~~css
+    {% 
+      include "../../overrides/assets/stylesheets/extra.css"
+    %}
+    ~~~
+
+!!! note
+
+    The official Material for MkDocs answer for [images with captions](https://squidfunk.github.io/mkdocs-material/reference/images/#image-captions) is to use `md_in_html` extension:
+    
+    ``` markdown
+    <figure markdown="span">
+      ![FOSS4G](img/foss4g.svg){ scale="25%" }
+      <figcaption>Free and Open Source Software for Geospatial</figcaption>
+    </figure>
+    ```
 
 reStructuredText has a `figure` directive:
 
@@ -380,9 +392,9 @@ reStructuredText has an `image` directive:
 
 ## Tables
 
-Material for MkDocs :squidfunk\`data tables \<reference/data-tables/\>\` use pipe-tables approach (supported by both **\*mkdocs**\* and **\*pandoc**\*):
+Material for MkDocs :squidfunk`data tables <reference/data-tables/>` use pipe-tables approach (supported by both ***mkdocs*** and ***pandoc***):
 
-Leading `` |` tailing ``\`:
+Leading `` |` tailing ```:
 
 ``` markdown
 | First Header | Second Header | Third Header |
@@ -402,7 +414,7 @@ Column alignment using ``:``
 
 ## Inline content
 
-Use of [mkdocs-include-plugin](https://github.com/mondeja/mkdocs-include-markdown-plugin) provides ability to inline content. Example project uses following **\`mkdocs.yml\`** setup:
+Use of [mkdocs-include-plugin](https://github.com/mondeja/mkdocs-include-markdown-plugin) provides ability to inline content. Example project uses following **`mkdocs.yml`** setup:
 
 ``` yaml
 plugins:
@@ -427,29 +439,29 @@ Inlining a snippet from another file is helpful for material such as disclaimers
 
 Here is a snippet to include markdown files inline, requires opening tag `{%` and closing tag `%}`:
 
-``` raw_markdown
 ~~~markdown
 {% 
   include "./include_md.txt"
 %}
 ~~~
-```
+
+!!! note
+
+    Placeholders `{/`and `/}`used to indicate location of `{%`and `%}`in above code example.
 
 Writers can use `include-markdown` with a glob pattern to inline many files, and an option to adjusting header level. Together these two features can be used break up longer pages into more manageable size.
 
 This takes the place of the sphinx-build `include` directive:
 
-``` raw_markdown
 ~~~rst
 {% 
   include "./include_rst.txt"
 %}
 ~~~
-```
 
 !!! note
 
-    You may wish to use the **\`txt\`** extension for included content. If you wish to use **\`md\`** extension you can adjust **\`mkdocs.yml\`** `exclude` or not `not_in_nav` to address warnings.
+    You may wish to use the **`txt`** extension for included content. If you wish to use **`md`** extension you can adjust **`mkdocs.yml`** `exclude` or not `not_in_nav` to address warnings.
     
     ``` yaml
     plugins:
@@ -466,22 +478,24 @@ Including configuration and code examples:
 > <CharacterString>da165110-88fd-11da-a88f-000d939bc5d8</CharacterString>
 > ```
 
-Use `include`to include normal files, with optional use of start and end markers to capture a snippet, and dedent for appearance. In this case we are including content into an xml code block to provide syntax highlighting:
+Use `include`to include normal files, with optional use of start and end markers to capture a snippet, and dedent for appearance.
 
-``` raw_markdown
+In this case we are including content into an xml code block to provide syntax highlighting, requires opening tag `{%` and closing tag `%}` within the code block:
+
 ~~~markdown
 {% 
   include "./include_code_md.txt"
 %}
 ~~~
-```
+
+!!! note
+
+    Placeholders `{/`and `/}`used to indicate location of `{%`and `%}`in above code example.
 
 This takes the place of the sphinx-build `literal-include` directive:
 
-``` raw_markdown
 ~~~rst
 {% 
   include "./include_code_rst.txt"
 %}
 ~~~
-```

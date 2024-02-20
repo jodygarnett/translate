@@ -451,6 +451,96 @@ def _download_path(path: str, download: str) -> str:
         return reference
 
 #
+# toctree scan
+#
+
+def scan_toctree(dir_path,rst_path) -> object:
+    """
+    Scan rst_file document and process toctree directives into nav dictionary
+
+    :param dir_path: path from source directory used as base for toctree references
+    :param rst_path: rst file to process
+    """
+    nav: list[object] = []
+    toctree = False
+
+    rst_file = os.path.normpath(
+        os.path.join(rst_folder,dir_path,rst_path)
+    )
+
+    with open(rst_file, 'r') as file:
+        text = file.read()
+
+    if '.. toctree::' not in text:
+        nav_reference = _nav_reference(dir_path, rst_path)
+        return [nav_reference]
+
+    for line in text.splitlines():
+        if line.startswith('.. toctree::'):
+            # directive started
+            toctree = True
+            nav_reference = _nav_reference(dir_path,rst_path)
+            if dir_path == '.' and rst_path == 'index.rst':
+                nav.append({ 'Home Page': nav_reference })
+            else:
+                nav.append(nav_reference)
+            continue
+
+        if toctree:
+            if len(line.strip()) == 0:
+                continue
+            if line.strip()[0:1] == ':':
+                continue
+            if line.startswith('   '):
+                rst_link = line.strip()
+                if rst_link.endswith('.rst'):
+                    link = rst_link[0:-4]
+                else:
+                    link = rst_link
+                    rst_link = rst_link+'.rst'
+
+                nav_reference = _nav_reference(dir_path,link)
+
+                link_dir_path = os.path.normpath(
+                    os.path.dirname(os.path.join(dir_path,rst_link))
+                )
+                link_rst_path = os.path.basename(rst_link)
+
+                sub_nav = scan_toctree( link_dir_path, link_rst_path )
+
+                if len(sub_nav) == 0:
+                    item = nav_reference
+                if len(sub_nav) == 1:
+                    item = sub_nav[0]
+                else:
+                    label = _doc_title(rst_file, link)
+                    item = {label: sub_nav}
+
+                nav.append(item)
+
+            else:
+                # end directive
+                toctree = False
+
+    if len(nav) == 0:
+        nav_reference = _nav_reference(dir_path, rst_path)
+        return [nav_reference]
+    else:
+        return nav
+
+def _nav_reference(rst_dir,rst_file) -> str:
+    rst_path = os.path.normpath(os.path.join(rst_dir, rst_file))
+
+    if( os.path.dirname(rst_path) == '.'):
+        reference = os.path.basename(rst_path)
+    else:
+        reference = rst_path
+
+    if reference.lower().endswith('.rst'):
+        reference = reference[0:-4]
+
+    return reference + '.md'
+#
 # RST PANDOC CONVERSION
 #
 def convert_rst(rst_file: str) -> str:

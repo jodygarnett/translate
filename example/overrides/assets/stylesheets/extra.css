@@ -1,0 +1,6 @@
+img + em, .browser-border + em, .browser-mockup + em {
+  display: block;
+  text-align: left;
+  font-size: 0.7rem;
+  font-style: normal;
+}

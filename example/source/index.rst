@@ -1,6 +1,6 @@
 
-MkDocs Translate Example
-========================
+MkDocs Translate
+================
 
 Translation example for `mkdocs_translate` script :release:`1.0`.
 

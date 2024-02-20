@@ -1,5 +1,5 @@
-../../../../requirements.txt
 ../../../../.gitignore
 ../../../../translate.yml
-../../../../mkdocs.yml
 ../../../../download.py
+../../../../mkdocs.yml
+../../../../requirements.txt

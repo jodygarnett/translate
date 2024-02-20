@@ -21,10 +21,13 @@ from .translate import convert_html
 from .translate import convert_markdown
 from .translate import convert_rst
 from .translate import deepl_document
-from .translate import scan_index_rst
-from .translate import scan_download_rst
 from .translate import init_anchors
 from .translate import init_config
+from .translate import scan_download_rst
+from .translate import scan_index_rst
+from .translate import scan_toctree
+
+import yaml
 
 app = typer.Typer(help="Translation for mkdocs content")
 
@@ -99,9 +102,14 @@ def scan(
 
     rst_path = mkdocs_translate.translate.rst_folder
     if test:
-        download_references: set[str] = scan_download_rst(rst_path, test)
-        print('\n'.join(download_references))
-        return
+        if scan.lower() in ("all","index"):
+            index_test = scan_index_rst(rst_path, file)
+            print(index_test)
+            return
+        if scan.lower() in ("download"):
+            download_references: set[str] = scan_download_rst(rst_path, test)
+            print('\n'.join(download_references))
+            return
 
     rst_glob = rst_path + "/**/*.rst"
 
@@ -168,7 +176,7 @@ def scan_download( collected: list[str] ):
 @app.command()
 def init(
         rst_path: Annotated[
-            List[str], typer.Argument(help="path to rst source folder")] = mkdocs_translate.translate.rst_folder,
+            List[str], typer.Argument(help="path to rst source folder")] = mkdocs_translate.translate.rst_folder
 ):
     """
     Init docs directory, copying images and files from rst source folder (excluding rst files for migration).
@@ -209,6 +217,28 @@ def init(
 
         shutil.copy2(file, copy)
         print(copy)
+
+@app.command()
+def nav():
+    """
+    Scan rst files collecting toctree structure into a working mkdocs nav tree.
+    """
+    check_folders()
+    rst_folder = mkdocs_translate.translate.rst_folder
+
+    rst_index = mkdocs_translate.translate.rst_folder
+
+    if os.path.exists(rst_index) and os.path.isdir(rst_index):
+        rst_index = os.path.join(mkdocs_translate.translate.rst_folder,'index.rst')
+
+    if not os.path.exists(rst_index):
+        raise FileNotFoundError(errno.ENOENT, f"RST file to scan for toctree not found at location:", rst_index)
+
+    relative_index = os.path.normpath(
+        os.path.relpath(rst_index,rst_folder)
+    )
+    nav: object = scan_toctree('.',relative_index)
+    print(yaml.dump(nav))
 
 
 def check_folders():

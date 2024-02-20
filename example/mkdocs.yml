@@ -1,5 +1,5 @@
 # Project information
-site_name: MkDocs Translate Example
+site_name: MkDocs Translate
 site_description: Example sphinx-build documentation project for use with mkdocs_translate script.
 
 site_dir: build/html
@@ -44,7 +44,6 @@ theme:
     - content.action.edit
     - content.code.copy
     - content.tabs.link
-    - navigation.tabs
     - navigation.tracking
     - navigation.prune
     - navigation.indexes
@@ -61,7 +60,7 @@ plugins:
   - include-markdown:
       preserve_includer_indent: true
       dedent: true
-      comments: true
+      comments: false
   - macros:
       render_by_default: false
       on_error_fail: true
@@ -102,10 +101,6 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.smartsymbols
   - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - tables
@@ -127,14 +122,14 @@ not_in_nav: |
 
 # Page tree
 nav:
-  - 'Home': index.md
-  - setup/index.md
-  - 'Translate':
-      - translate/index.md
-      - translate/migrate.md
-      - translate/language.md
-  - 'Guide':
-    - guide/index.md
-    - guide/markdown.md
-    - guide/style.md
-  - development/index.md
+- Home: index.md
+- setup/index.md
+- Translate:
+  - translate/index.md
+  - translate/migrate.md
+  - translate/language.md
+- Guide:
+  - guide/index.md
+  - guide/markdown.md
+  - guide/style.md
+- development/index.md
