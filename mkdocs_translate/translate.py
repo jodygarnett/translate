@@ -1414,6 +1414,8 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
             ignore_check = os.path.relpath(md_file,convert_folder).replace('.tmp.md','.md')
             if ignore_check in config['macro_ignore']:
                 clean = '---\n# YAML header\nrender_macros: false\n---\n\n' + clean
+            else:
+                clean = '---\nrender_macros: true\n---\n\n' + clean
         else:
             clean = '---\nrender_macros: true\n---\n\n' + clean
 

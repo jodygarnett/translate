@@ -1,3 +1,7 @@
+---
+render_macros: true
+---
+
 # MkDocs Translate
 
 Translation example for `mkdocs_translate`script [Release {{ release }}](https://github.com/jodygarnett/translate/releases/tag/{{ release }}).
