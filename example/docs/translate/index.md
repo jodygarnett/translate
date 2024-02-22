@@ -4,7 +4,7 @@ The translate script is used for migrating contents to mkdocs, and translating m
 
 <div class="grid cards" markdown>
 
--   [Migrate from sphinx-build to mkdocs](migrate.md)
+-   [Migrate to MkDocs](migrate.md)
 -   [Language](language.md)
 
 </div>

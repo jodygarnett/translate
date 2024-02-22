@@ -5,5 +5,5 @@ The translate script is used for migrating contents to mkdocs, and translating m
 
 .. toctree::
 
-   migrate
-   language
+   Migrate to MkDocs <migrate>
+   Language <language>

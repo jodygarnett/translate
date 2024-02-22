@@ -525,7 +525,14 @@ def scan_toctree(toctree_rst_file) -> object:
                 link = parse.link
                 link_rst = parse.link_rst
 
-                if '*' in link:
+                if '*' not in link:
+                    # clean path references to account for ./
+                    nav_reference = _nav_reference_link(dir_path, link)
+
+                    item = _nav_matched_item( toctree_rst_file, nav_reference, link_rst, parse.toc_title )
+                    matched_links.add(nav_reference)
+                    nav.append(item)
+                else:
                     search_path = os.path.normpath(os.path.join(os.path.dirname(toctree_rst_file), link))
                     # glob contents
                     for match_file in glob.glob(search_path, recursive=False):
@@ -543,16 +550,9 @@ def scan_toctree(toctree_rst_file) -> object:
                                 # wildcard only lists documents not already covered
                                 continue
 
-                            match_item = _nav_matched_item( toctree_rst_file, match.nav, match.link_rst)
+                            match_item = _nav_matched_item( toctree_rst_file, match.nav, match.link_rst, match.toc_title)
                             matched_links.add(match.nav)
                             nav.append(match_item)
-                else:
-                    # clean path references to account for ./
-                    nav_reference = _nav_reference_link(dir_path, link)
-
-                    item = _nav_matched_item( toctree_rst_file, nav_reference, link_rst )
-                    matched_links.add(nav_reference)
-                    nav.append(item)
 
             else:
                 # end directive
@@ -586,8 +586,9 @@ class Link:
     nav: str
     file: str
     index: str
+    title: str
 
-    def __init__(self, base_rst:str, link:str):
+    def __init__(self, base_rst:str, link:str,toc_title:str):
         self.base = base_rst
         self.link = link
         self.link_rst = link + '.rst'
@@ -595,18 +596,25 @@ class Link:
         self.file = os.path.normpath(os.path.join(os.path.dirname(base_rst), self.link_rst))
         self.nav = _relpath(self.file,rst_folder)[:-4]+'.md'
         self.index = '/' + os.path.relpath(self.file, rst_folder)
+        self.toc_title = toc_title
 
     def __str__(self):
         return f"{self.link} -> {self.file}"
 
     def title(self) -> str:
+        # check toctree title
+        if self.toc_title:
+            return self.toc_title
+
+        # check page title
         title_key = self.index + '.title'
         if title_key in anchors:
             return anchors[title_key]
-        else:
-            label = _label(link)
-            logger.warning(self.base + ": broken doc '" + self.link + "' title:" + label)
-            return label
+
+        # placeholder label
+        label = _label(self.index)
+        logger.warning(self.base + ": broken doc '" + self.link + "' title:" + label)
+        return label
 
     def nav_title(self):
         """
@@ -642,14 +650,21 @@ def _nav_rst_link(toc_rst_file:str, toc_reference:str) -> Link:
     """
     Process a toctree reference into a useful Link object.
     """
-    reference = toc_reference.strip()
-    if reference.endswith('.rst'):
-        return Link(toc_rst_file, reference[0:-4])
+    match = re.match("^(.*)<(.*)>$", toc_reference.strip() )
+    if match:
+        title = match.group(1).strip()
+        link = match.group(2).strip()
     else:
-        return Link(toc_rst_file, reference)
+        title = ''
+        link = toc_reference.strip()
+
+    if link.endswith('.rst'):
+        return Link(toc_rst_file, link[0:-4],title)
+    else:
+        return Link(toc_rst_file, link,title)
 
 
-def _nav_matched_item( toctree_rst_file, nav_reference, link_rst_path:str ) -> object:
+def _nav_matched_item( toctree_rst_file, nav_reference, link_rst_path:str, toc_tree:str ) -> object:
     """
     Build up nav tree, recursive with scan_toctree() method.
     """
@@ -662,15 +677,23 @@ def _nav_matched_item( toctree_rst_file, nav_reference, link_rst_path:str ) -> o
         nav_title = _nav_title(nav_link)
         if nav_title:
             return {nav_title: nav_reference}
-        return nav_reference
-    if len(sub_nav) == 1:
-        # nav_link = _nav_link(toctree_rst_file, nav_reference)
-        # nav_title = _nav_title(nav_link)
-        # if nav_title:
-        #     return {nav_title: sub_nav[0]}
-        return sub_nav[0]
+        elif toc_tree:
+            return {toc_tree: nav_reference}
+        else:
+            return nav_reference
+
+    elif len(sub_nav) == 1:
+        nav_link = _nav_link(toctree_rst_file, link_rst_path[:-4])
+        nav_title = _nav_title(nav_link)
+        if nav_title:
+            return {nav_title: sub_nav[0]}
+        elif toc_tree:
+            return {toc_tree: sub_nav[0]}
+        else:
+            return sub_nav[0]
+
     else:
-        # remove title as it will be covered by parent
+        # remove initial index title as it will be covered by parent
         if type(sub_nav[0]) is dict:
             val = next(iter(sub_nav[0].values()))
             sub_nav[0] = val
@@ -678,13 +701,14 @@ def _nav_matched_item( toctree_rst_file, nav_reference, link_rst_path:str ) -> o
         nav_title = _nav_title(nav_reference)
         if nav_title:
             return {nav_title: sub_nav}
+        elif toc_tree:
+            return {toc_tree: sub_nav}
+        else:
+            source = os.path.normpath(os.path.join( rst_folder, 'index.rst'))
+            doc = link_rst_path[:-4]
+            label = _doc_title(source,doc)
 
-        source = os.path.normpath(os.path.join( rst_folder, 'index.rst'))
-        doc = link_rst_path[:-4]
-        label = _doc_title(source,doc)
-
-        return {label: sub_nav}
-
+            return {label: sub_nav}
 
 def _nav_link(toctree_rst_file, toc_reference):
     """

@@ -1,4 +1,4 @@
-# Language
+# Language Internationalization
 
 To help manage a multi-language build is it kind to provide human translators with an example document to start from.
 
