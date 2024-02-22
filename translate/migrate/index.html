@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#migrate_1" class="md-skip">
+        <a href="#migrate-from-sphinx-build-to-mkdocs" class="md-skip">
           Skip to content
         </a>
       
@@ -640,7 +640,7 @@
   
 
 
-<h1 id="migrate_1">Migrate</h1>
+<h1 id="migrate-from-sphinx-build-to-mkdocs">Migrate from sphinx-build to mkdocs</h1>
 <h2 id="preflight">Preflight</h2>
 <ol>
 <li>
@@ -666,12 +666,15 @@
 <ul>
 <li>
 <p>You can run these scans independently:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mkdocs_translate<span class="w"> </span>scan<span class="w"> </span>download
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mkdocs_translate<span class="w"> </span>scan<span class="w"> </span>--scan<span class="o">=</span>download
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mkdocs_translate<span class="w"> </span>scan<span class="w"> </span>--scan<span class="o">=</span>index
 </span></code></pre></div>
 </li>
 <li>
 <p>To troubleshoot an individual file, the resulting <code>index</code>can be sent to standard out:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mkdocs_translate<span class="w"> </span>scan<span class="w"> </span>download<span class="w"> </span>--test<span class="w"> </span>source/setup/index.rst
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mkdocs_translate<span class="w"> </span>scan<span class="w"> </span>source/setup/index.rst
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>mkdocs_translate<span class="w"> </span>scan<span class="w"> </span>--scan<span class="o">=</span>download<span class="w"> </span>source/setup/index.rst
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>mkdocs_translate<span class="w"> </span>scan<span class="w"> </span>--scan<span class="o">=</span>index<span class="w"> </span>source/setup/index.rst
 </span></code></pre></div>
 </li>
 </ul>

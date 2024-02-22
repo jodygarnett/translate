@@ -871,11 +871,16 @@ requirements.txt
 </span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">  </span><span class="nt">squidfunk</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://squidfunk.github.io/mkdocs-material/%s</span>
 </span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="nt">macro_ignore</span><span class="p">:</span>
 </span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup/index.md</span>
-</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>
-</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="c1"># markdown internationalization</span>
-</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="nt">deepl_base_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://api-free.deepl.com&quot;</span>
-</span><span id="__span-10-24"><a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="nt">upload_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;upload&quot;</span>
-</span><span id="__span-10-25"><a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="nt">download_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;download&quot;</span>
+</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="nt">nav</span><span class="p">:</span>
+</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">  </span><span class="nt">index.md</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Home</span>
+</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">  </span><span class="s">&#39;translate/index.md&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Translate</span>
+</span><span id="__span-10-24"><a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">  </span><span class="s">&#39;translate/migrate.md&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Migrate</span>
+</span><span id="__span-10-25"><a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">  </span><span class="nt">guide/index.md</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Guide</span>
+</span><span id="__span-10-26"><a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a>
+</span><span id="__span-10-27"><a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="c1"># markdown internationalization</span>
+</span><span id="__span-10-28"><a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="nt">deepl_base_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://api-free.deepl.com&quot;</span>
+</span><span id="__span-10-29"><a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a><span class="nt">upload_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;upload&quot;</span>
+</span><span id="__span-10-30"><a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a><span class="nt">download_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;download&quot;</span>
 </span></code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -992,6 +997,10 @@ requirements.txt
 <dd>
 <p>Use of <code>mkdocs-macros-plugin</code>can conflict with code examples.</p>
 <p>This script adds the YAML header to enable macros to better support the use <code>{{ version }}</code>and <code>{{ release }}</code> If you find this accidentially is triggered by code examples you can add an ignore.</p>
+</dd>
+<dt><code>nav</code></dt>
+<dd>
+<p>Provide simplified title for navigation, incase <code>toctree</code> title is too long. Most often used to override top-level <strong><code>index.rst</code></strong> title as "Home".</p>
 </dd>
 </dl>
 
