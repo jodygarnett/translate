@@ -86,32 +86,40 @@ def french(
 
 @app.command()
 def scan(
-        scan: Annotated[str, typer.Argument(
-            help="RST scan to perform (all, index, toc, download)."
-        )] = "all",
-        test: Optional[str] = typer.Option(
-            None,
-            "--test",
+        scan: Optional[str] = typer.Option(
+            "all",
+            "--scan",
+            help="RST scan to perform (all, index, toc, download).",
+        ),
+        test_rst_file: Annotated[str, typer.Argument(
             help="Test scan a single file, sending output to standard output",
-        )
+        )] = None
 ):
     """
     Scan rst files collecting index, download, toc details for migration process.
     """
     check_folders()
 
-    rst_path = mkdocs_translate.translate.rst_folder
-    if test:
-        if scan.lower() in ("all","index"):
-            index_test = scan_index_rst(rst_path, file)
-            print(index_test)
-            return
-        if scan.lower() in ("download"):
-            download_references: set[str] = scan_download_rst(rst_path, test)
-            print('\n'.join(download_references))
-            return
+    rst_folder = mkdocs_translate.translate.rst_folder
 
-    rst_glob = rst_path + "/**/*.rst"
+    if test_rst_file:
+        if scan.lower() in ("all","index"):
+            print(f"\nTest scan anchor and header index: { test_rst_file }\n")
+            index_test = scan_index_rst(rst_folder, test_rst_file)
+            print("------------------------------")
+            if index_test:
+                print(index_test, end="")
+            print("------------------------------")
+        if scan.lower() in ("all","download"):
+            print(f"\nTest scan :download: directive: ${ test_rst_file }")
+            print("------------------------------")
+            download_references: set[str] = scan_download_rst(rst_folder, test_rst_file)
+            if download_references:
+                print('\n'.join(download_references))
+            print("------------------------------")
+        return
+
+    rst_glob = rst_folder + "/**/*.rst"
 
     collected = collect_path(rst_glob, 'rst', True)
     logger.info("Scanning " + str(len(collected)) + " files")
@@ -123,13 +131,13 @@ def scan(
 
 def scan_index( collected: list[str]):
     # configuration settings
-    rst_path = mkdocs_translate.translate.rst_folder
+    rst_folder = mkdocs_translate.translate.rst_folder
     anchor_path = mkdocs_translate.translate.anchor_file
 
     index = ''
     for file in collected:
         logger.debug("index: " + file)
-        index += scan_index_rst(rst_path, file)
+        index += scan_index_rst(rst_folder, file)
 
     anchor_dir = os.path.dirname(anchor_path)
     if not os.path.exists(anchor_dir):
@@ -219,14 +227,21 @@ def init(
         print(copy)
 
 @app.command()
-def nav():
+def nav(
+        rst_file: Annotated[str, typer.Argument(
+            help="Scan toctree location, defaults to rst source folder.",
+        )] = None
+):
     """
     Scan rst files collecting toctree structure into a working mkdocs nav tree.
     """
     check_folders()
-    rst_folder = mkdocs_translate.translate.rst_folder
+    init_anchors()
 
-    rst_index = mkdocs_translate.translate.rst_folder
+    if rst_file:
+        rst_index = rst_file
+    else:
+        rst_index = mkdocs_translate.translate.rst_folder
 
     if os.path.exists(rst_index) and os.path.isdir(rst_index):
         rst_index = os.path.join(mkdocs_translate.translate.rst_folder,'index.rst')
@@ -234,10 +249,7 @@ def nav():
     if not os.path.exists(rst_index):
         raise FileNotFoundError(errno.ENOENT, f"RST file to scan for toctree not found at location:", rst_index)
 
-    relative_index = os.path.normpath(
-        os.path.relpath(rst_index,rst_folder)
-    )
-    nav: object = scan_toctree('.',relative_index)
+    nav: object = scan_toctree(rst_index)
     print(yaml.dump(nav))
 
 

@@ -143,6 +143,10 @@ def collect_path(path: str, extension: str, include: bool) -> list[str]:
     else:
         if path.endswith('.' + extension) == include:
             files.append(path)
+        else:
+            for file in glob.glob(path+"/**/*.rst", recursive=True):
+                if file.endswith('.' + extension) == include:
+                    files.append(file)
 
     return files
 
@@ -280,12 +284,16 @@ def scan_heading(index: int, lines: list[str]) -> str:
 def _doc_title(rst_path: str, doc_link: str) -> str:
     """
     Create a label title, based on a documentation link (using on anchors.txt index)
+
+    :param rst_path: path of rst file providing the doc link
+    :param doc_link: doc link (may be absolute or relative)
+    :return: title, based n looking up definitive path in anchors.txt index
     """
-    resolved_path = _doc_location(rst_path, doc_link)
+    definitive_path = _doc_location(rst_path, doc_link)
     # example:
     #   /install-guide/loading-samples.rst=/install-guide/loading-samples.rst
     #   /install-guide/loading-samples.rst.title=Loading templates and sample data
-    title_key = resolved_path + '.rst.title'
+    title_key = definitive_path + '.title'
     if title_key in anchors:
         return anchors[title_key]
     else:
@@ -296,22 +304,31 @@ def _doc_title(rst_path: str, doc_link: str) -> str:
 
 def _doc_location(rst_path: str, doc_link: str) -> str:
     """
-    Determines absolute path location for link, relative to provided path.
+    Determines definitive path location for link, relative to provided path.
 
     Do not use as is, mkdocs only works with relative links
 
     :param rst_path: path of rst file providing the documentation link
     :param doc_link: documentation link (may be absolute or relative)
-    :return: absolute path, indicating location relative to docs folder. Used for looking up title.
+    :return: definitive path to rst, indicating location relative to source folder. Used for looking up title.
     """
-    if doc_link.startswith("/"):
-        return doc_link
-    else:
-        dir = os.path.dirname(rst_path)
-        dir2 = os.path.relpath(dir, rst_folder)
-        link_path = os.path.normpath(os.path.join(dir2, doc_link))
-        return '/' + link_path
+    doc_link = doc_link.strip()
+    if not doc_link.endswith('.rst'):
+        doc_link = doc_link + '.rst'
 
+    if doc_link.startswith("/"):
+        definitive_path = doc_link
+    else:
+        rst_path_dir = os.path.dirname(rst_path)
+        definitive_rst_path_dir = os.path.relpath(rst_path_dir, rst_folder)
+        definitive_path = os.path.normpath(os.path.join(definitive_rst_path_dir, doc_link))
+
+    rst_file_path = os.path.normpath(os.path.join(rst_folder,definitive_path))
+    if os.path.exists(rst_file_path) and os.path.isfile(rst_file_path):
+        return '/' + definitive_path
+    else:
+        logging.warning('broken documentation link:'+definitive_path)
+        return '/' + definitive_path
 
 def _label(link: str) -> str:
     """
@@ -458,92 +475,260 @@ def _download_path(path: str, download: str) -> str:
 # toctree scan
 #
 
-def scan_toctree(dir_path,rst_path) -> object:
+def scan_toctree(toctree_rst_file) -> object:
     """
-    Scan rst_file document and process toctree directives into nav dictionary
+    Scan rst_file document and process toctree directives into nav dictionary.
 
-    :param dir_path: path from source directory used as base for toctree references
     :param rst_path: rst file to process
     """
     nav: list[object] = []
-    toctree = False
+    toc_tree: bool = False
 
-    rst_file = os.path.normpath(
-        os.path.join(rst_folder,dir_path,rst_path)
-    )
+    dir_path = os.path.dirname(toctree_rst_file)
 
-    with open(rst_file, 'r') as file:
+    with open(toctree_rst_file, 'r') as file:
         text = file.read()
 
+    # set of toctree items already covered (used to support `*` wildcards)
+    matched_links: set[str] = set()
+
     if '.. toctree::' not in text:
-        nav_reference = _nav_reference(dir_path, rst_path)
+        nav_reference = _nav_reference_file(toctree_rst_file)
         return [nav_reference]
 
     for line in text.splitlines():
         if line.startswith('.. toctree::'):
             # directive started
-            toctree = True
-            nav_reference = _nav_reference(dir_path,rst_path)
-            if dir_path == '.' and rst_path == 'index.rst':
-                nav.append({ 'Home Page': nav_reference })
-            else:
-                nav.append(nav_reference)
+            toc_tree = True
+
+            # index = _nav_rst_self(toctree_rst_file)
+            # nav_reference = index.link
+            nav_reference = _nav_reference_file(toctree_rst_file)
+            nav_link = nav_reference
+            if nav_reference not in matched_links:
+                # need to check as some pages have more than one toctree
+                nav_title = _nav_title(nav_link)
+                if nav_title:
+                    nav.append({ nav_title: nav_reference })
+                else:
+                    nav.append(nav_link)
+                matched_links.add(nav_reference)
             continue
 
-        if toctree:
+        if toc_tree:
             if len(line.strip()) == 0:
                 continue
             if line.strip()[0:1] == ':':
                 continue
             if line.startswith('   '):
-                rst_link = line.strip()
-                if rst_link.endswith('.rst'):
-                    link = rst_link[0:-4]
+                parse = _nav_rst_link(toctree_rst_file, line.strip())
+                link = parse.link
+                link_rst = parse.link_rst
+
+                if '*' in link:
+                    search_path = os.path.normpath(os.path.join(os.path.dirname(toctree_rst_file), link))
+                    # glob contents
+                    for match_file in glob.glob(search_path, recursive=False):
+                        if match_file.endswith('.rst'):
+                            if match_file == toctree_rst_file:
+                                continue
+
+                            match_link = os.path.relpath(match_file,os.path.dirname(toctree_rst_file))[:-4]
+
+                            match: Link = _nav_rst_link(toctree_rst_file, match_link)
+
+                            match_dir_path = os.path.dirname(match.file)
+
+                            if match.nav in matched_links:
+                                # wildcard only lists documents not already covered
+                                continue
+
+                            match_item = _nav_matched_item( toctree_rst_file, match.nav, match.link_rst)
+                            matched_links.add(match.nav)
+                            nav.append(match_item)
                 else:
-                    link = rst_link
-                    rst_link = rst_link+'.rst'
+                    # clean path references to account for ./
+                    nav_reference = _nav_reference_link(dir_path, link)
 
-                nav_reference = _nav_reference(dir_path,link)
-
-                link_dir_path = os.path.normpath(
-                    os.path.dirname(os.path.join(dir_path,rst_link))
-                )
-                link_rst_path = os.path.basename(rst_link)
-
-                sub_nav = scan_toctree( link_dir_path, link_rst_path )
-
-                if len(sub_nav) == 0:
-                    item = nav_reference
-                if len(sub_nav) == 1:
-                    item = sub_nav[0]
-                else:
-                    label = _doc_title(rst_file, link)
-                    item = {label: sub_nav}
-
-                nav.append(item)
+                    item = _nav_matched_item( toctree_rst_file, nav_reference, link_rst )
+                    matched_links.add(nav_reference)
+                    nav.append(item)
 
             else:
                 # end directive
-                toctree = False
+                toc_tree = False
 
     if len(nav) == 0:
-        nav_reference = _nav_reference(dir_path, rst_path)
+        nav_reference = _nav_reference_link(dir_path, rst_path)
         return [nav_reference]
     else:
         return nav
 
-def _nav_reference(rst_dir,rst_file) -> str:
-    rst_path = os.path.normpath(os.path.join(rst_dir, rst_file))
 
-    if( os.path.dirname(rst_path) == '.'):
+class Link:
+    """
+    Documentation link, relative to a base document.
+
+    Attributes:
+        base: The base document of providing the link
+        link: The link to rst file
+        link_rst: Link including rst suffix
+        link_md: Link including md suffix
+        nav: Complete navigation link for mkdocs.yml
+        file: Complete file path, including source folder
+        title_index: Definitive index lookup starting with leading '/'
+
+    """
+    base: str
+    link: str
+    link_rst: str
+    link_md: str
+    nav: str
+    file: str
+    index: str
+
+    def __init__(self, base_rst:str, link:str):
+        self.base = base_rst
+        self.link = link
+        self.link_rst = link + '.rst'
+        self.link_md = link + '.md'
+        self.file = os.path.normpath(os.path.join(os.path.dirname(base_rst), self.link_rst))
+        self.nav = _relpath(self.file,rst_folder)[:-4]+'.md'
+        self.index = '/' + os.path.relpath(self.file, rst_folder)
+
+    def __str__(self):
+        return f"{self.link} -> {self.file}"
+
+    def title(self) -> str:
+        title_key = self.index + '.title'
+        if title_key in anchors:
+            return anchors[title_key]
+        else:
+            label = _label(link)
+            logger.warning(self.base + ": broken doc '" + self.link + "' title:" + label)
+            return label
+
+    def nav_title(self):
+        """
+        Look up nav title override, if document title is too long.
+
+        :return: nav title, or empty string if not provided.
+        """
+        if 'nav' in config:
+            nav: dict[str, str] = config['nav']
+            if self.nav in nav:
+                return nav[self.nav]
+        return ''
+
+def _nav_rst_self(toc_rst_file:str) -> Link:
+    """
+    Process a toctree rst reference into a useful Link object.
+    """
+    rst_path = _rst_path(toc_rst_file)
+    reference = rst_path[0:-4]
+    return Link( "", reference )
+
+def _relpath(file:str,folder:str) -> str:
+    """
+    Safe os.path.relpath that will not introduce leading .
+    """
+    rst_path = os.path.relpath(file, folder)
+    if './' in rst_path:
+        return file
+    else:
+        return rst_path
+
+def _nav_rst_link(toc_rst_file:str, toc_reference:str) -> Link:
+    """
+    Process a toctree reference into a useful Link object.
+    """
+    reference = toc_reference.strip()
+    if reference.endswith('.rst'):
+        return Link(toc_rst_file, reference[0:-4])
+    else:
+        return Link(toc_rst_file, reference)
+
+
+def _nav_matched_item( toctree_rst_file, nav_reference, link_rst_path:str ) -> object:
+    """
+    Build up nav tree, recursive with scan_toctree() method.
+    """
+    link_rst_file = os.path.normpath(os.path.join(os.path.dirname(toctree_rst_file), link_rst_path))
+
+    sub_nav = scan_toctree(link_rst_file)
+
+    if len(sub_nav) == 0:
+        nav_link = _nav_link(toctree_rst_file, nav_reference)
+        nav_title = _nav_title(nav_link)
+        if nav_title:
+            return {nav_title: nav_reference}
+        return nav_reference
+    if len(sub_nav) == 1:
+        # nav_link = _nav_link(toctree_rst_file, nav_reference)
+        # nav_title = _nav_title(nav_link)
+        # if nav_title:
+        #     return {nav_title: sub_nav[0]}
+        return sub_nav[0]
+    else:
+        # remove title as it will be covered by parent
+        if type(sub_nav[0]) is dict:
+            val = next(iter(sub_nav[0].values()))
+            sub_nav[0] = val
+
+        nav_title = _nav_title(nav_reference)
+        if nav_title:
+            return {nav_title: sub_nav}
+
+        source = os.path.normpath(os.path.join( rst_folder, 'index.rst'))
+        doc = link_rst_path[:-4]
+        label = _doc_title(source,doc)
+
+        return {label: sub_nav}
+
+
+def _nav_link(toctree_rst_file, toc_reference):
+    """
+    Determin mkdocs nav link for provided toctree toc_reference.
+    """
+    path = os.path.normpath(os.path.join(os.path.dirname(toctree_rst_file),toc_reference))
+    return os.path.relpath(path,rst_folder) + '.md'
+
+def _nav_title(nav_link: str) -> str:
+    """
+    Check config for nav title override (incase document title is too verbose)
+
+    return config['nav] override if available, or empty str
+    """
+    if 'nav' in config:
+        nav:dict[str,str] = config['nav']
+        if nav_link in nav:
+            return nav[nav_link]
+    return ''
+
+def _nav_reference_file(rst_file) -> str:
+    """
+    Convert rst file to mkdocs nav link (complete with .md suffix).
+    """
+    if rst_file.endswith('.rst'):
+        rst_file = rst_file[:-4]
+
+
+    rst_path = os.path.relpath(rst_file,rst_folder)
+    if os.path.dirname(rst_path) == '.':
         reference = os.path.basename(rst_path)
     else:
         reference = rst_path
-
-    if reference.lower().endswith('.rst'):
-        reference = reference[0:-4]
+    rst_path2 = _relpath(rst_path,rst_folder)
 
     return reference + '.md'
+
+def _nav_reference_link(rst_dir,link) -> str:
+    """
+    Convert rst link to mkdocs nav link (complete with .md suffix).
+    """
+    rst_path = os.path.normpath(os.path.join(rst_dir, link))+'.rst'
+    return _nav_reference_file(rst_path)
+
 #
 # RST PANDOC CONVERSION
 #
@@ -838,13 +1023,18 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
     """
     scan document for toctree directives to process
     """
+    toctree_rst_file = path
+
     toctree = None
+    # set of toctree items already covered (used to support `*` wildcards)
+    matched_links: set[str] = set()
+
     hidden = False
     process = ''
     for line in text.splitlines():
         if line.startswith('.. toctree::'):
             # directive started
-            toctree = ''
+            toctree = '<div class="grid cards" markdown>\n\n'
             hidden = False
             continue
 
@@ -857,13 +1047,32 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
                 continue
             if line.startswith('   '):
                 # processing directive
-                link = line.strip().replace(".rst", "")
-                label = _doc_title(path, link)
-                toctree += f"* `{label} <{link}.rst>`_\n"
+                parse = _nav_rst_link(toctree_rst_file, line)
+
+                if '*' in parse.link:
+                    search_path = os.path.normpath(os.path.join(os.path.dirname(toctree_rst_file), parse.link))
+                    # glob contents
+                    for match_file in glob.glob(search_path, recursive=False):
+                        if match_file.endswith('.rst'):
+                            if match_file == toctree_rst_file:
+                                continue
+
+                            relative_link = os.path.relpath(match_file,os.path.dirname(toctree_rst_file))[:-4]
+
+                            match: Link = _nav_rst_link(toctree_rst_file, relative_link)
+                            if match.link_rst not in matched_links:
+                                # wildcard only lists documents not already covered
+                                matched_links.add(match.link_rst)
+                                toctree += f"-   `{match.title()} <{match.link_rst}>`_\n"
+                else:
+                    if parse.link_rst not in matched_links:
+                        matched_links.add(parse.link_rst)
+                        toctree += f"-   `{parse.title()} <{parse.link_rst}>`_\n"
             else:
                 # end directive
                 if not hidden:
-                    process += toctree + '\n'
+                    process += toctree + '\n</div>\n\n'
+
                 process += line + '\n'
                 toctree = None
                 hidden = False
@@ -873,7 +1082,7 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
     if toctree != None:
         # end directive at end of file
         if not hidden:
-            process += toctree + '\n'
+            process += toctree + '\n</div>\n\n'
 
     return process
 

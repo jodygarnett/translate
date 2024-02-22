@@ -1,4 +1,4 @@
-# Migrate
+# Migrate from sphinx-build to mkdocs
 
 ## Preflight
 
@@ -28,13 +28,16 @@ Troubleshooting:
 -   You can run these scans independently:
 
     ``` bash
-    mkdocs_translate scan download
+    mkdocs_translate scan --scan=download
+    mkdocs_translate scan --scan=index
     ```
 
 -   To troubleshoot an individual file, the resulting `index`can be sent to standard out:
 
     ``` bash
-    mkdocs_translate scan download --test source/setup/index.rst
+    mkdocs_translate scan source/setup/index.rst
+    mkdocs_translate scan --scan=download source/setup/index.rst
+    mkdocs_translate scan --scan=index source/setup/index.rst
     ```
 
 ## Navigation

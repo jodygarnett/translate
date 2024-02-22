@@ -2,8 +2,12 @@
 
 Working with documentation, markdown formatting, and writing style guide.
 
+<div class="grid cards" markdown>
+
 -   [Markdown](markdown.md)
 -   [Style Guide](style.md)
+
+</div>
 
 !!! note
 

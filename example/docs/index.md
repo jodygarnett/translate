@@ -6,10 +6,14 @@ render_macros: true
 
 Translation example for `mkdocs_translate`script [Release {{ release }}](https://github.com/jodygarnett/translate/releases/tag/{{ release }}).
 
+<div class="grid cards" markdown>
+
 -   [Getting started](setup/index.md)
 -   [Translate Script](translate/index.md)
 -   [Writing Guide](guide/index.md)
 -   [Development](development/index.md)
+
+</div>
 
 !!! note
 

@@ -18,6 +18,11 @@ extlinks:
   squidfunk: https://squidfunk.github.io/mkdocs-material/%s
 macro_ignore:
   - setup/index.md
+nav:
+  index.md: Home
+  'translate/index.md': Translate
+  'translate/migrate.md': Migrate
+  guide/index.md: Guide
 
 # markdown internationalization
 deepl_base_url: "https://api-free.deepl.com"

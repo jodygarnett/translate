@@ -248,3 +248,7 @@ The configuration settings are:
 :   Use of `mkdocs-macros-plugin`can conflict with code examples.
 
     This script adds the YAML header to enable macros to better support the use `{{ version }}`and `{{ release }}` If you find this accidentially is triggered by code examples you can add an ignore.
+
+`nav`
+
+:   Provide simplified title for navigation, incase `toctree` title is too long. Most often used to override top-level **`index.rst`** title as "Home".

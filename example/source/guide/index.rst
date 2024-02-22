@@ -7,7 +7,7 @@ Working with documentation, markdown formatting, and writing style guide.
    :maxdepth: 2
 
    markdown
-   style
+   *
 
 .. note::
 

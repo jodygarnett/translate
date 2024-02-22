@@ -231,3 +231,7 @@ The configuration settings are:
 
   This script adds the YAML header to enable macros to better support the use `{{ version }}` and `{{ release }}`.
   If you find this accidentially is triggered by code examples you can add an ignore.
+
+`nav`:
+  Provide simplified title for navigation, incase ``toctree`` title is too long. Most often used to override top-level
+  :file:`index.rst` title as "Home".
