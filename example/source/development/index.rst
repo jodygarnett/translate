@@ -1,6 +1,11 @@
 Development
 ===========
 
+.. toctree::
+   :glob:
+   
+   *
+
 Local Development
 -----------------
 

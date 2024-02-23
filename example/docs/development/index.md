@@ -1,5 +1,11 @@
 # Development
 
+<div class="grid cards" markdown>
+
+-   [Release History](release.md)
+
+</div>
+
 ## Local Development
 
 To build and test locally:

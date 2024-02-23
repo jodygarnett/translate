@@ -24,8 +24,12 @@
       </or>
     </condition>
 
-    <condition property="project.version" value="${project.version}" else="1.0-SNAPSHOT">
+    <condition property="project.version" value="${project.version}" else="0.9">
       <isset property="project.version" />
+    </condition>
+    
+    <condition property="project.release" value="${project.release}" else="0.9-SNAPSHOT">
+      <isset property="project.release" />
     </condition>
 
     <echo level="verbose">sphinx-build available: ${sphinx.available}</echo>
@@ -64,20 +68,22 @@
 
   <target name="sphinx" if="sphinx.available">
     <local name="argLine"/>
-    <property name="argLine" value="-D release=${project.version} -q -W --keep-going -b ${build} -d &quot;${build.directory}/doctrees&quot; &quot;${source.directory}&quot; &quot;${build.directory}/${build}&quot;"/>
+    <property name="argLine" value="-D release='${project.release}' -D version='${project.version}' -q -W --keep-going -b ${build} -d &quot;${build.directory}/doctrees&quot; &quot;${source.directory}&quot; &quot;${build.directory}/${build}&quot;"/>
     <echo message="Running sphinx-build ${argLine}"/>
     <exec executable="sphinx-build" failonerror="true" dir="${basedir}">
       <env key="project.version" value="${project.version}"/>
+      <env key="project.release" value="${project.release}"/>
       <arg line="${argLine}"/>
     </exec>
   </target>
 
   <target name="autobuild" if="autobuild.available">
     <local name="argLine"/>
-    <property name="argLine" value="-D release=${project.version} -q -W -b html -d &quot;${build.directory}/doctrees&quot; &quot;${source.directory}&quot; &quot;${build.directory}/html&quot;"/>
+    <property name="argLine" value="-D release=${project.release} -D version=${project.version} -q -W -b html -d &quot;${build.directory}/doctrees&quot; &quot;${source.directory}&quot; &quot;${build.directory}/html&quot;"/>
     <echo message="Running sphinx-autobuild ${argLine}"/>
     <exec executable="sphinx-autobuild" failonerror="true" dir="${basedir}">
       <env key="project.version" value="${project.version}"/>
+      <env key="project.release" value="${project.release}"/>
       <arg line="${argLine} --open-browser"/>
     </exec>
   </target>

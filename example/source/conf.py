@@ -9,7 +9,8 @@
 project = 'MkDocs Translate'
 copyright = '2024, Jody Garnett'
 author = 'Jody Garnett'
-release = '1.0'
+version = "0.9"
+release = "0.9.5"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
