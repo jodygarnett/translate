@@ -77,7 +77,7 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: ttps://github.com/jodygarnett/translate
-  version: '0.9'
+  version: '0.9.5'
   release: '0.9'
 
 # Extensions
