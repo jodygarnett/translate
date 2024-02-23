@@ -782,7 +782,7 @@ requirements.txt
 </li>
 </ol>
 <h2 id="download_hook">Download Hook</h2>
-<p>Optional: If your content uses <code>download</code>directive to include external content, there is a <code>mkdocs</code>hook for processing of <code>download.txt</code>files.</p>
+<p>Optional: If your content uses <code>download</code> directive to include external content, there is a <code>mkdocs</code> hook for processing of <code>download.txt</code> files.</p>
 <ol>
 <li>
 <p>Create <a href="download/download.py">download.py</a>.</p>
@@ -825,7 +825,7 @@ requirements.txt
 </span></code></pre></div>
 </li>
 <li>
-<p>Register hook with <code>mkdocs.yml</code></p>
+<p>Register hook with <code>mkdocs.yml</code>:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Customizations</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nt">hooks</span><span class="p">:</span>
 </span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">download.py</span>
@@ -922,27 +922,27 @@ requirements.txt
 <dd>
 <p>Default assumes you are running from the current directory.</p>
 </dd>
-<dt><code>docs_folder</code> <code>docs</code></dt>
+<dt><code>docs_folder</code>: <code>docs</code></dt>
 <dd>
 <p>mkdocs convention.</p>
 </dd>
-<dt><code>build_folder</code> <code>build</code></dt>
+<dt><code>build_folder</code>: <code>build</code></dt>
 <dd>
 <p>The use of <code>build</code> follows sphinx-build and mkdocs convention, maven projects may wish to use <code>target</code>.</p>
 </dd>
-<dt><code>rst_folder</code> <code>source</code></dt>
+<dt><code>rst_folder</code>: <code>source</code></dt>
 <dd>
 <p>Location of sphinx-build documentation to migrate to mkdocs.</p>
 </dd>
-<dt><code>anchor_file</code> <code>anchors.txt</code></dt>
+<dt><code>anchor_file</code>: <code>anchors.txt</code></dt>
 <dd>
 <p>Name of index file used to lookup anchor and title information during migration.</p>
 </dd>
-<dt><code>convert_folder</code> <code>migrate</code></dt>
+<dt><code>convert_folder</code>: <code>migrate</code></dt>
 <dd>
-<p>Combined with <code>build_folder</code> for rst conversion temporary files (example: <code>build/migrate</code>. Temporary files are required for use by pandoc.</p>
+<p>Combined with <code>build_folder</code> for rst conversion temporary files (example: <code>build/migrate</code>). Temporary files are required for use by pandoc.</p>
 </dd>
-<dt><code>upload_folder</code> <code>upload</code></dt>
+<dt><code>upload_folder</code>: <code>upload</code></dt>
 <dd>
 <p>Combined with <code>build_folder</code> to stage html files for internationalization (example: <code>build/upload</code>)</p>
 </dd>
@@ -950,19 +950,19 @@ requirements.txt
 <dd>
 <p>Customize if you have a subscription to deepl.</p>
 </dd>
-<dt><code>download_folder</code> <code>download</code></dt>
+<dt><code>download_folder</code>: <code>download</code></dt>
 <dd>
 <p>Combined with <code>build_folder</code> to retrieve internationalization results (example: <code>build/download</code>) Temporary files are required for use by pandoc.</p>
 </dd>
-<dt><code>substitutions</code></dt>
+<dt><code>substitutions</code>:</dt>
 <dd>
-<p>dictionary of <code>|substitutions|</code>to use when converting config.py rst_epilog common substitutions.</p>
+<p>dictionary of <code>|substitutions|</code> to use when converting config.py rst_epilog common substitutions.</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">project</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GeoServer</span>
 </span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nt">author</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Open Source Geospatial Foundation</span>
 </span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="nt">copyright</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2023, Open Source Geospatial Foundation</span>
 </span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nt">project_copyright</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2023, Open Source Geospatial Foundation</span>
 </span></code></pre></div>
-<p>The built-in substitutions for <code>{{ version }}</code>and <code>{{ release }}</code>are changed to <code>{{ version }}</code> and <code>{{ release }}</code> variables for use with <code>mkdocs-macros-plugin</code>variable substitution:</p>
+<p>The built-in substitutions for <code>{{ version }}</code> and <code>{{ release }}</code> are changed to <code>{{ version }}</code> and <code>{{ release }}</code> variables for use with <code>mkdocs-macros-plugin</code> variable substitution:</p>
 <p>Use <strong><code>mkdocs.yml</code></strong> to define these variable substitutions:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">extra</span><span class="p">:</span>
 </span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">homepage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://geoserver.org/</span>
@@ -970,7 +970,7 @@ requirements.txt
 </span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="nt">release</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;2.24.2&#39;</span>
 </span></code></pre></div>
 </dd>
-<dt><code>extlinks</code></dt>
+<dt><code>extlinks</code>:</dt>
 <dd>
 <p>dictionary of config.py extlinks substitutions taking the form:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>extlinks:
@@ -981,7 +981,7 @@ requirements.txt
 </span></code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Use of <code>mkdocs-macros-plugin</code>for variable substitution of <code>release</code>above.</p>
+<p>Use of <code>mkdocs-macros-plugin</code> for variable substitution of <code>release</code> above.</p>
 <p>Use of <code>|GEOS-%s</code> to override default link text <code>%s</code>.</p>
 </div>
 <p>This handles the sphinx-build <strong><code>config.py</code></strong> extlinks during migration:</p>
@@ -993,12 +993,12 @@ requirements.txt
 </span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="p">}</span>
 </span></code></pre></div>
 </dd>
-<dt><code>macro_ignore</code></dt>
+<dt><code>macro_ignore</code>:</dt>
 <dd>
-<p>Use of <code>mkdocs-macros-plugin</code>can conflict with code examples.</p>
-<p>This script adds the YAML header to enable macros to better support the use <code>{{ version }}</code>and <code>{{ release }}</code> If you find this accidentially is triggered by code examples you can add an ignore.</p>
+<p>Use of <code>mkdocs-macros-plugin</code> can conflict with code examples.</p>
+<p>This script adds the YAML header to enable macros to better support the use <code>{{ version }}</code> and <code>{{ release }}</code>. If you find this accidentially is triggered by code examples you can add an ignore.</p>
 </dd>
-<dt><code>nav</code></dt>
+<dt><code>nav</code>:</dt>
 <dd>
 <p>Provide simplified title for navigation, incase <code>toctree</code> title is too long. Most often used to override top-level <strong><code>index.rst</code></strong> title as "Home".</p>
 </dd>
