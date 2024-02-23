@@ -5,6 +5,7 @@ Working with documentation, markdown formatting, and writing style guide.
 
 .. toctree::
    :maxdepth: 2
+   :glob:
 
    markdown
    *

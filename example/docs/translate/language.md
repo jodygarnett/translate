@@ -4,7 +4,7 @@ To help manage a multi-language build is it kind to provide human translators wi
 
 ## Setup
 
-The `mkdocs-static-i18n <https://ultrabug.github.io/mkdocs-static-i18n/>`plugin is setup based on suffix, with **`index.md`** is the default English, and **``index.fr.md``** used for French:
+The ``mkdocs-static-i18n <https://ultrabug.github.io/mkdocs-static-i18n/>`` plugin is setup based on suffix, with **`index.md`** is the default English, and **``index.fr.md``** used for French:
 
     | index.md
     | index.fr.md
@@ -33,7 +33,7 @@ plugins:
 
 ## Language Translation {: #translate }
 
-Translation uses ***pandoc*** to convert to `html` and then using [Deepl REST API](https://deepl.com).
+Translation uses ***pandoc*** to convert to ``html``, and then using [Deepl REST API](https://deepl.com).
 
 1.  Provide environmental variable with Deepl authentication key:
 

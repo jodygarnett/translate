@@ -18,20 +18,20 @@ These markdown conventions are carefully constructed for consistent representati
 
 ## User interface components
 
-Use `**strong**`to name user interface components for interaction (press for buttons, click for link).
+Use ``**strong**`` to name user interface components for interaction (press for buttons, click for link).
 
 Preview:
 
 > Navigate to **Data --> Layers** page, and press **Add** to create a new layer.
 
-Markdown uses `**strong**`
+Markdown uses `**strong**`:
 
 ``` markdown
 Navigate to **Data > Layers** page,
 and press **Add** to create a new layer.
 ```
 
-Rich structured text uses `menuselection`and `guilabel`directives:
+Rich structured text uses ``menuselection`` and ``guilabel`` directives:
 
 ``` reStructuredText
 Navigate to **Data --> Layers** page,
@@ -49,7 +49,7 @@ Preview:
 Markdown uses monospace:
 
 ``` markdown
-Select ``Basemap``layer.
+Select `Basemap` layer.
 ```
 
 Rich structured text uses monospace:
@@ -64,12 +64,12 @@ Use `monospace` for user supplied text input:
 
 Preview:
 
-> Use the **Search** field to enter: `Ocean*`
+> Use the **Search** field to enter: ``Ocean*``
 
 Markdown uses monospace:
 
 ``` markdown
-Use the **Search** field enter: ``Ocean*``
+Use the **Search** field enter: `Ocean*`
 ```
 
 Rich structured text uses `kbd` directive:
@@ -84,7 +84,7 @@ Use `key` directive for keyboard keys.
 
 Preview:
 
-> Press `Control-s`to search.
+> Press ``Control-s`` to search.
 
 Markdown uses **mkdocs-material** [keys](https://squidfunk.github.io/mkdocs-material/reference/formatting/#adding-keyboard-keys) formatting:
 
@@ -95,7 +95,7 @@ Press ++control+s++ to search.
 Rich structured text:
 
 ``` reStructuredText
-Press ``Control-s``to search.
+Press `Control-s` to search.
 ```
 
 ## Form input
@@ -108,11 +108,11 @@ Preview:
 >
 >     User:
 >
->     :   `admin`
+>     :   ``admin``
 >
 >     Password:
 >
->     :   `geoserver`
+>     :   ``geoserver``
 >
 >     Remember me
 >
@@ -127,11 +127,13 @@ Markdown: definition lists
 
     **User**
 
-    :   ``admin``
+    :   `admin`
+
 
     **Password**
 
-    :   ``geoserver``
+    :   `geoserver`
+
 
     **Remember me**
 
@@ -151,8 +153,10 @@ Rich structured text: list-table
       :stub-columns: 1
 
       * - User:
-        - ``admin``         * - Password:
-        - ``geoserver``         * - Remember me
+        - `admin`
+      * - Password:
+        - `geoserver`
+      * - Remember me
         - Unchecked
 
    Press **Login**.
@@ -169,7 +173,7 @@ Preview:
 Markdown:
 
 ``` markdown
-Launch ***pgAdmin*** and connect to the ``tutorial``database.
+Launch ***pgAdmin*** and connect to the `tutorial` database.
 ```
 
 Rich structured text uses `command` directive:
@@ -228,7 +232,7 @@ Sample file included in the documentation:
 
 > Download schema [example.txt](files/example.txt).
 
-Markdown relative link, with text following **bold** with `monospace`file convention above:
+Markdown relative link, with text following **bold** with ``monospace`` file convention above:
 
 ``` markdown
 Download text [**`example.txt`**](files/example.txt).
@@ -394,7 +398,7 @@ reStructuredText has an `image` directive:
 
 Material for MkDocs :squidfunk`data tables <reference/data-tables/>` use pipe-tables approach (supported by both ***mkdocs*** and ***pandoc***):
 
-Leading `` |` tailing ```:
+Leading ``|`` tailing `|`:
 
 ``` markdown
 | First Header | Second Header | Third Header |
@@ -447,7 +451,7 @@ Here is a snippet to include markdown files inline, requires opening tag `{%` an
 
 !!! note
 
-    Placeholders `{/`and `/}`used to indicate location of `{%`and `%}`in above code example.
+    Placeholders ``{/`` and ``/}`` used to indicate location of ``{%`` and ``%}`` in above code example.
 
 Writers can use `include-markdown` with a glob pattern to inline many files, and an option to adjusting header level. Together these two features can be used break up longer pages into more manageable size.
 
@@ -478,7 +482,7 @@ Including configuration and code examples:
 > <CharacterString>da165110-88fd-11da-a88f-000d939bc5d8</CharacterString>
 > ```
 
-Use `include`to include normal files, with optional use of start and end markers to capture a snippet, and dedent for appearance.
+Use ``include`` to include normal files, with optional use of start and end markers to capture a snippet, and dedent for appearance.
 
 In this case we are including content into an xml code block to provide syntax highlighting, requires opening tag `{%` and closing tag `%}` within the code block:
 
@@ -490,7 +494,7 @@ In this case we are including content into an xml code block to provide syntax h
 
 !!! note
 
-    Placeholders `{/`and `/}`used to indicate location of `{%`and `%}`in above code example.
+    Placeholders ``{/`` and ``/}`` used to indicate location of ``{%`` and ``%}`` in above code example.
 
 This takes the place of the sphinx-build `literal-include` directive:
 

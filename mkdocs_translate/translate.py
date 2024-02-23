@@ -4,6 +4,7 @@ import logging
 import os
 import pkgutil
 import re
+import shutil
 import subprocess
 from typing import Callable
 
@@ -138,15 +139,21 @@ def collect_path(path: str, extension: str, include: bool) -> list[str]:
     files = []
     if '*' in path:
         for file in glob.glob(path, recursive=True):
-            if file.endswith('.' + extension) == include:
-                files.append(file)
-    else:
-        if path.endswith('.' + extension) == include:
-            files.append(path)
-        else:
-            for file in glob.glob(path+"/**/*.rst", recursive=True):
+            if os.path.isfile(file):
                 if file.endswith('.' + extension) == include:
                     files.append(file)
+    elif os.path.exists(path) and os.path.isfile(path):
+        if path.endswith('.' + extension) == include:
+            files.append(path)
+    elif os.path.exists(path) and os.path.isdir(path):
+        if include:
+            for file in glob.glob(path+"/**/*."+extension, recursive=True):
+                files.append(file)
+        else:
+            for file in glob.glob(path+"/**/*.*", recursive=True):
+                if file.endswith('.' + extension) == include:
+                    files.append(file)
+
 
     return files
 
@@ -824,6 +831,7 @@ def convert_rst(rst_file: str) -> str:
 
     logging.debug("Preprocessing '" + md_tmp_file + "' to '" + md_file + "'")
     postprocess_rst_markdown(md_tmp_file, md_file)
+    shutil.copystat(rst_file, md_file)
     if not os.path.exists(md_file):
         raise FileNotFoundError(errno.ENOENT, f"Did not create postprocessed md file:", md_file)
 

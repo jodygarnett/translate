@@ -32,7 +32,7 @@ Troubleshooting:
     mkdocs_translate scan --scan=index
     ```
 
--   To troubleshoot an individual file, the resulting `index`can be sent to standard out:
+-   To troubleshoot an individual file, the resulting ``index`` can be sent to standard out:
 
     ``` bash
     mkdocs_translate scan source/setup/index.rst

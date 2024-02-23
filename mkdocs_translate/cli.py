@@ -199,23 +199,24 @@ def init(
 
     if rst_path:
         # if rst_path provided we are only copying artifacts from a directory
-        if rst_path:
-            for path in rst_path:
+        for path in rst_path:
+            if os.path.exists(rst_path):
                 if os.path.isdir(path) and path.startswith(rst_folder):
-                    glob.append( rst_path + "/**/*.*" )
+                    glob.append( rst_path + "/**/*" )
                 else:
                     logger.warning(rst_folder+" does not contain folder "+path)
-        else:
-            raise FileNotFoundError(errno.ENOENT, f"RST folder does not exist at location:", rst_path)
+            else:
+                raise FileNotFoundError(errno.ENOENT, f"RST folder does not exist at location:", path)
     else:
-        glob.append(mkdocs_translate.translate.rst_folder + "/**/*.*")
+        glob.append(mkdocs_translate.translate.rst_folder + "/**/*")
 
     # create docs if required
     if not os.path.exists(docs_folder):
         logger.info("Creating docs directory '" + docs_folder + "'")
         os.makedirs(docs_folder)
 
-    for file in collect_paths(glob, 'rst', False):
+    traverse_files = collect_paths(glob, 'rst', False)
+    for file in traverse_files:
         copy = file.replace(rst_folder, docs_folder,1)
         if os.path.basename(copy) in ['conf.py']:
             continue
@@ -223,7 +224,8 @@ def init(
         if not os.path.exists(os.path.dirname(copy)):
             os.makedirs(os.path.dirname(copy), exist_ok=True)
 
-        shutil.copy2(file, copy)
+        if os.path.isfile(file):
+            shutil.copy2(file, copy)
         print(copy)
 
 @app.command()

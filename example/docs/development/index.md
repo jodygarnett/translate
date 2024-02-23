@@ -87,4 +87,4 @@ To build and test locally:
     diff docs/contributing/style-guide.md build/convert/contributing/style-guide.md
     ```
 
-    Langauge conversion uses `text/html`to avoid internationalization of content distributing markdown formatting.
+    Langauge conversion uses ``text/html`` to avoid internationalization of content distributing markdown formatting.
