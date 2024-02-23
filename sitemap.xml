@@ -11,6 +11,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>http://jodygarnett.github.io/translate/development/release/</loc>
+         <lastmod>2024-02-23</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>http://jodygarnett.github.io/translate/download/LICENSE/</loc>
          <lastmod>2024-02-23</lastmod>
          <changefreq>daily</changefreq>
