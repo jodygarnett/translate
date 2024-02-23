@@ -132,4 +132,6 @@ nav:
   - guide/index.md
   - guide/markdown.md
   - guide/style.md
-- development/index.md
+- Development:
+  - development/index.md
+  - development/release.md

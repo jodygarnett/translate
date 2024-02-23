@@ -448,14 +448,15 @@ def scan_download_rst(base_path: str, rst_file: str) -> set[str]:
         if download[0:1] == '/':
             # sphinx-build leading slash indicates root of source folder
             download = download[1:]
-            for _ in range(relative_path.count('/') - 1):
+            for _ in range(relative_path.count('/')):
                 download = '../' + download
 
         if (relative_path.count('/') < download.count('../')):
             # external download link, copy required
-            download = '../../' + download
+            download = '../' + download
 
-            check = os.path.normpath( os.path.join(os.path.dirname(rst_file), 'download', download))
+            download_folder = os.path.abspath(os.path.join(os.path.dirname(rst_file), 'download'))
+            check = os.path.normpath( os.path.join(download_folder, download))
             if os.path.exists(check):
                 logger.info(f"{rst_file} check: {check}")
             else:
