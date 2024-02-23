@@ -416,7 +416,6 @@ def scan_download_rst(base_path: str, rst_file: str) -> set[str]:
     with open(rst_file, 'r') as file:
         text = file.read()
 
-
     if ":download:" not in text:
         return set()
 
@@ -437,8 +436,8 @@ def scan_download_rst(base_path: str, rst_file: str) -> set[str]:
     relative_path = os.path.relpath(rst_file,base_path)
 
     external_downloads: set[str] = set()
-
     for download in downloads:
+
         if download[0:1] == '/':
             # sphinx-build leading slash indicates root of source folder
             download = download[1:]
@@ -447,7 +446,14 @@ def scan_download_rst(base_path: str, rst_file: str) -> set[str]:
 
         if (relative_path.count('/') < download.count('../')):
             # external download link, copy required
-            download = '../' + download
+            download = '../../' + download
+
+            check = os.path.normpath( os.path.join(os.path.dirname(rst_file), 'download', download))
+            if os.path.exists(check):
+                logger.info(f"{rst_file} check: {check}")
+            else:
+                logger.warning(f"{rst_file} check: {check} - not found")
+
             external_downloads.add(download)
 
     return external_downloads
@@ -485,7 +491,8 @@ def scan_toctree(toctree_rst_file) -> object:
     toc_tree: bool = False
 
     dir_path = os.path.dirname(toctree_rst_file)
-
+    if not os.path.exists(toctree_rst_file):
+        raise FileNotFoundError('Unable to scan:', toctree_rst_file)
     with open(toctree_rst_file, 'r') as file:
         text = file.read()
 
@@ -659,9 +666,12 @@ def _nav_rst_link(toc_rst_file:str, toc_reference:str) -> Link:
         link = toc_reference.strip()
 
     if link.endswith('.rst'):
-        return Link(toc_rst_file, link[0:-4],title)
-    else:
-        return Link(toc_rst_file, link,title)
+        link = link[0:-4]
+
+    if link.endswith('/'):
+        link = link[0:-1]
+
+    return Link(toc_rst_file, link, title)
 
 
 def _nav_matched_item( toctree_rst_file, nav_reference, link_rst_path:str, toc_tree:str ) -> object:
@@ -704,7 +714,8 @@ def _nav_matched_item( toctree_rst_file, nav_reference, link_rst_path:str, toc_t
         elif toc_tree:
             return {toc_tree: sub_nav}
         else:
-            source = os.path.normpath(os.path.join( rst_folder, 'index.rst'))
+            # source = os.path.normpath(os.path.join( rst_folder, toctree_rst_file))
+            source = toctree_rst_file
             doc = link_rst_path[:-4]
             label = _doc_title(source,doc)
 
@@ -854,7 +865,7 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
 
     # strip leading anchor as it causes trouble with nav title
     if text.startswith('.. _'):
-        text = text.split('\n',2)[2]
+       text = text.split('\n',2)[2]
 
     # gui-label and menuselection represented: **Cancel**
     text = re.sub(
@@ -897,13 +908,17 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
         flags=re.MULTILINE
     )
 
+    # for monosapce markdown prefers double backticks (which allows single backtick to be used within text)
     # very simple literals: `some text` should use ``some text``
-    text = re.sub(
-        r"(\s)`([^`])(.+?)`[^_]",
-        r"\1``\2\3``",
-        text,
-        flags=re.MULTILINE
-    )
+    #
+    # UPDATE: PANDOC is reducing these back down to single backticks (sigh)
+    #
+    # text = re.sub(
+    #     r"(\s)`([^`])(.+?)`(\s|\W)",
+    #     r"\1``\2\3``\4",
+    #     text,
+    #     flags=re.MULTILINE
+    # )
 
     # static - rst_epilog stuff from config.py
     if 'substitutions' in config:
@@ -1066,7 +1081,7 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
             if len(line.strip()) == 0:
                 continue
             if line.strip()[0:1] == ':':
-                if line.strip()[0:1] == ':hidden:':
+                if line.strip() == ':hidden:':
                     hidden = True
                 continue
             if line.startswith('   '):
