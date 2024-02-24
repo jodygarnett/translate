@@ -1660,7 +1660,7 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
         clean
     )
 
-    # process pandoc ::: adominitions to mkdocs representation
+    # process pandoc ::: admonitions to mkdocs representation
     if ':::' in clean:
         clean = _postprocess_pandoc_fenced_divs(md_file, clean)
 

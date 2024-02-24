@@ -99,12 +99,24 @@ Troubleshooting:
 Known limitations
 -----------------
 
+
 Some things are not supported by :command:`pandoc`, which will produce ``WARNING:`` messages:
 
 * Substitutions used for inline images
+  
+  This may work but require substitution before use of inline image?
 
-* Underlines: replace with bold or italic
+* Underlines: replace with bold or italic are confused with wiki style reference.
 
   ::
 
     WARNING: broken reference 'getting_involved' link:getting_involved-broken.rst
+
+
+Some things are not supported by the script:
+
+* Use of ``include`` directive with ``:litteral:`` option is not respected.
+  
+  Prefer use of ``literalinclude`` directive.
+
+* Use of ``list-table`` ``width`` results in a markdown simple table, rather than pipe table

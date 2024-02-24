@@ -1,4 +1,4 @@
-../../../translate.yml
 ../../../requirements.txt
-../../../download.py
 ../../../mkdocs.yml
+../../../translate.yml
+../../../download.py
