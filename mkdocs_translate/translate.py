@@ -855,6 +855,7 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
     text = _preprocess_rst_block_directive(rst_file, text, 'literalinclude', _block_directive_literalinclude)
     text = _preprocess_rst_block_directive(rst_file, text, 'parsed-literal', _block_directive_parsed_literal)
     text = _preprocess_rst_block_directive(rst_file, text, 'figure', _block_directive_figure)
+    text = _preprocess_rst_block_directive(rst_file, text, 'list-table', _block_directive_list_table)
 
     # process some things into url links
     if ':doc:' in text:
@@ -1277,6 +1278,28 @@ def _block_directive_only(path: str, value: str, arguments: dict[str, str], cont
     return simplified
 
 
+def _block_directive_list_table(path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
+    """
+    Called by _preprocess_rst_block_directive to clean up list-table directive
+    """
+    relative_path = value.strip()
+
+    # pandoc has trouble with list-table directives that have :width: option
+
+    raw = f'{indent}.. list-table::\n'
+    for (key, value) in arguments.items():
+        if key in ['width','widths']:
+            continue
+        raw += f"{indent}   {indent}:{key}: {value}\n"
+
+    raw += f"{indent}\n"
+
+    for item in block.splitlines():
+        raw += item + '\n'
+
+    raw += indent + '\n'
+    return raw
+
 def _block_directive_include(path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
     """
     Called by _preprocess_rst_block_directive to convert sphinx directive to raw markdown code block.
@@ -1292,6 +1315,9 @@ def _block_directive_include(path: str, value: str, arguments: dict[str, str], b
     elif relative_path[0:2] != './':
         # include-markdown-plugin requires relative paths to start with ./ or ../
         relative_path = './' + relative_path
+
+    if relative_path.endswith('.rst'):
+        relative_path = relative_path[:-4]+'.md'
 
     raw = indent + '.. code-block:: raw_markdown\n\n'
     raw += indent + '   {%\n'
