@@ -226,6 +226,16 @@ The configuration settings are:
         'download_release': ('https://sourceforge.net/projects/geoserver/files/GeoServer/' + release + '/geoserver-' + release + '-%s.zip', 'geoserver-' + release + '-%s.zip )
      }
 
+  For greater control use ``raw`` as the label name:
+
+  .. code-block::
+
+     extlinks:
+       download_community: {{ download_community('%s','snapshot') }}|raw
+
+  This allows generation of your own markdown, in the above example it used used to call mkdocs-macros-plugin macro
+  which is responsible for generating the correct markdown at build time.
+
 `macro_ignore`:
   Use of `mkdocs-macros-plugin` can conflict with code examples.
 

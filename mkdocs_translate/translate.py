@@ -958,18 +958,31 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
                     link = definition_split[0]
                     label = '%s'
 
-                # match :key:`link <url>` first
-                ext_reference = re.compile(r':' + key + r':`(.*?)\s+<(.*?)>`')
-                text = ext_reference.sub(
-                    lambda match: "`" + match.group(1) + " <" + link.replace(r'%s', match.group(2)) + ">`_",
-                    text
-                )
-                # match :key:`<url>` second
-                ext_reference = re.compile(r':' + key + r':`(.*?)`')
-                text = ext_reference.sub(
-                    lambda match: "`" + label.replace(r'%s', match.group(1)) + " <" + link.replace(r'%s', match.group(1)) + ">`_",
-                    text
-                )
+                if label == "raw":
+                    # raw
+                    ext_reference = re.compile(r':' + key + r':`(.*?)\s+<(.*?)>`')
+                    text = ext_reference.sub(
+                        lambda match: link.replace(r'%s', match.group(2)),
+                        text
+                    )
+                    ext_reference = re.compile(r':' + key + r':`(.*?)`')
+                    text = ext_reference.sub(
+                        lambda match: link.replace(r'%s', match.group(1)),
+                        text
+                    )
+                else:
+                    # match :key:`link <url>` first
+                    ext_reference = re.compile(r':' + key + r':`(.*?)\s+<(.*?)>`')
+                    text = ext_reference.sub(
+                        lambda match: "`" + match.group(1) + " <" + link.replace(r'%s', match.group(2)) + ">`_",
+                        text
+                    )
+                    # match :key:`<url>` second
+                    ext_reference = re.compile(r':' + key + r':`(.*?)`')
+                    text = ext_reference.sub(
+                        lambda match: "`" + label.replace(r'%s', match.group(1)) + " <" + link.replace(r'%s', match.group(1)) + ">`_",
+                        text
+                    )
 
     with open(rst_prep, 'w') as rst:
         rst.write(text)
