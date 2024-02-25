@@ -978,6 +978,7 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
                         text
                     )
                     # match :key:`<url>` second
+                    # match :key:`<url>` second
                     ext_reference = re.compile(r':' + key + r':`(.*?)`')
                     text = ext_reference.sub(
                         lambda match: "`" + label.replace(r'%s', match.group(1)) + " <" + link.replace(r'%s', match.group(1)) + ">`_",
@@ -1258,6 +1259,8 @@ def _block_directive_parsed_literal(path: str, value: str, arguments: dict[str, 
 
     if block:
         for line in block.splitlines():
+            if '\\\\' in line:
+                line = line.replace("\\\\","\\")
             simplified += indent + '   ' + line + '\n'
     else:
         logging.debug('parsed-literal expects a code block')
@@ -1486,7 +1489,7 @@ def _preprocess_rst_block_directive(path: str, text: str, directive: str,
                 logger.debug("      " + option + '="' + value + '"')
                 directive_arguments[option] = value.lstrip()
                 continue
-            elif indented > len(indent):
+            elif blank or indented > len(indent):
                 # procssing directive content
                 directive_raw += line + '\n'
                 if blank:
