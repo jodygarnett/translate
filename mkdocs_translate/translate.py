@@ -1294,17 +1294,102 @@ def _block_directive_only(path: str, value: str, arguments: dict[str, str], cont
     return simplified
 
 
-def _block_directive_list_table(path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
-    """
-    Called by _preprocess_rst_block_directive to clean up list-table directive
-    """
-    relative_path = value.strip()
+def _list_table_scan(block:str) -> str:
+    scan = "empty"
+    scan_detected = "unknown"
+    columns = 0
 
-    # pandoc has trouble with list-table directives that have :width: option
+    ROW = re.compile(r'^(\s+)([\*|-])(\s+)([-|*])(\s+)(.*)$')
+    CELL = re.compile(r'^(\s+)([\*|-])(\s+)([-|*])(.*)$')
+    CONTENT = re.compile(r'^(\s+)(.*)$')
 
+    max_columns = 0;
+
+    first_line = block.split('\n',1)[0]
+
+    row = ROW.match(first_line)
+    if row:
+        ROW_LEADING_INDENT = row.group(1)
+        ROW_BULLET = row.group(2)
+        ROW_CELL_INDENT = row.group(3)
+        CELL_BULLET = row.group(4)
+        CELL_CONTENT_INDENT = row.group(5)
+        content = row.group(6)
+
+        # indent amount for cell
+        indent_cell = len(ROW_LEADING_INDENT + ROW_BULLET + ROW_CELL_INDENT)
+
+        # indent amount for content
+        content_indent = len(ROW_LEADING_INDENT + ROW_BULLET + ROW_CELL_INDENT + CELL_BULLET + CELL_CONTENT_INDENT)
+    else:
+        return "inconsistent"
+
+    for line in block:
+        blank = len(line.strip()) == 0
+        indented = len(line.lstrip()) - len(line)
+
+        row = ROW.match(line)
+        cell = CELL.match(line)
+        if blank:
+            return "grid-table"
+
+        if indented == 0:
+            if scan == "start":
+                continue
+            if scan == "empty":
+                continue
+            else:
+                columns = columns+1
+                scan = "empty"
+
+        if line.startswith("* - "):
+            if scan == "row":
+                # two sequential rows? not sure how to clean this up - trust pandoc
+                return "inconsistent: two sequential row items"
+
+            if scan == "data":
+                max_columns = math.max(max_columns, columns)
+
+            if scan in ["empty","start","data"]:
+                scan = "row"
+                columns = 0
+                row_indent = indent + 4
+                continue;
+            else:
+                return "inconsistent"
+
+        elif line.startswith("- "):
+            if scan == "start":
+                # does not make sense to start with a data
+                return "inconsistent: start with data item"
+            if scan in ["empty","row"]:
+                columns = columns + 1
+                if columns > 2:
+                    return "grid-table"
+
+            scan = "data"
+            data_indent = indent + 2
+            continue;
+
+        else:
+            if scan == "row" and indent != row_indent:
+                # row has block directive
+                return "grid-table"
+
+            if scan == "data" and indent != data_indent:
+                # data has block directive
+                return "grid-table"
+
+    return "pipe-table"
+
+def _safe_list_table(file_path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
+    """
+    Safe list-table stripping out widths and width control which force grid-table representation.
+    """
+    # re-encode list-table directive
     raw = f'{indent}.. list-table::\n'
     for (key, value) in arguments.items():
-        if key in ['width','widths']:
+        if key in ['width', 'widths']:
             continue
         raw += f"{indent}   {indent}:{key}: {value}\n"
 
@@ -1316,7 +1401,209 @@ def _block_directive_list_table(path: str, value: str, arguments: dict[str, str]
     raw += indent + '\n'
     return raw
 
-def _block_directive_include(path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
+
+def _rst_definition_list_from_list_table(file_path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
+    """
+    Process list-table directive into a definition list to avoid pandoc conversion into grid-markdown grid-table.
+    """
+    ROW = re.compile(r'^(\s+)([\*|-])(\s+)([-|*])(\s+)(.*)$')
+    # CELL = re.compile(r'^(\s+)([\*|-])(\s+)([^-|^\*].*)$')
+    # CONTENT = re.compile(r'^(\s+)(.*)$')
+
+    first_line = block.split('\n',1)[0]
+    row = ROW.match(first_line)
+    if row:
+        ROW_LEADING_INDENT = row.group(1)
+        ROW_BULLET = row.group(2)
+        ROW_CELL_INDENT = row.group(3)
+        CELL_BULLET = row.group(4)
+        CELL_CONTENT_INDENT = row.group(5)
+        content = row.group(6)
+
+        row_indentation = len(ROW_LEADING_INDENT)
+        cell_indentation = len(ROW_LEADING_INDENT + ROW_BULLET + ROW_CELL_INDENT)
+        content_indentation = len(ROW_LEADING_INDENT + ROW_BULLET + ROW_CELL_INDENT + CELL_BULLET + CELL_CONTENT_INDENT)
+        cell_content_indentation = len(CELL_CONTENT_INDENT)
+    else:
+        raise ValueError(f"{file_path}: list-table first row required, unexpected content:" + first_line)
+
+    if CELL_BULLET == "*":
+        CELL_BULLET = r"\*"
+
+    cell_pattern = r"^\s{" + str(cell_indentation) + "}" + CELL_BULLET + r"\s{" + str(cell_content_indentation) + r"}(.*)$"
+    CELL = re.compile( cell_pattern )
+
+    cell_empty_pattern = r"^\s{" + str(cell_indentation) + "}" + CELL_BULLET + r"$"
+    CELL_EMPTY = re.compile(cell_empty_pattern)
+
+    content_pattern = r"^\s{"+str(content_indentation)+r"}(.*)$"
+    CONTENT = re.compile( content_pattern)
+
+    # generate raw reStructuredText definition list
+    processed = ''
+    state = "start"
+
+    term = ''
+    definition = ''
+
+    for line in block.splitlines():
+        row = ROW.match(line)
+        cell = CELL.match(line)
+        cell_empty = CELL_EMPTY.match(line)
+        content = CONTENT.match(line)
+
+        if len(line.strip()) == 0:
+            intended = 0
+        else:
+            intended = len(line) - len(line.lstrip());
+        blank = intended == 0
+
+        if state == "start":
+            if blank:
+                continue
+            if row:
+                state = "row"
+                term = row.group(6)
+                continue
+            elif cell:
+                raise ValueError(f"{file_path}: list-table start row expected, unexpected cell:" + line)
+            else:
+                raise ValueError(f"{file_path}: list-table start row expected, unexpected content:" + line)
+
+        elif state == "blank":
+            if blank:
+                continue
+
+            elif row:
+                for def_line in definition.splitlines():
+                    processed += f"{indent}   {def_line}\n"
+
+                processed += f"{indent}\n"
+                definition = ''
+                term = ''
+
+                state = "row"
+                term = row.group(6)
+                continue
+
+            elif cell:
+                state = "cell"
+                definition = cell.group(1)
+                continue
+
+            elif cell_empty:
+                state = "cell"
+                definition = ""
+                continue
+
+            elif content:
+                # this is tricky!
+                if definition:
+                    definition += "\n"+content.group(1)
+                    status = "cell"
+                    continue
+
+                elif term:
+                    term += content.group(1)
+                    status = "row"
+
+            raise ValueError(f"{file_path}: list-table, unexpected content:" + line)
+
+        elif state == "row":
+            if row and intended == row_indentation:
+                # two rows is a row no go
+                raise ValueError(f"{file_path}: list-table row processing, unexpected row:" + line)
+
+            if blank:
+                state = "blank"
+                continue
+
+            if cell:
+                state = "cell"
+                definition = cell.group(1)
+                continue
+
+            if cell_empty:
+                state = "cell"
+                definition = ""
+                continue
+
+            if content:
+                term += content.group(1)
+                continue
+
+            raise ValueError(f"{file_path}: list-table row processing, unexpected content:" + line)
+
+        elif state == "cell":
+            if blank:
+                definition += "\n"
+                continue
+
+            if row:
+                processed += f"{indent}{term}\n"
+                for def_line in definition.splitlines():
+                    processed += f"{indent}   {def_line}\n"
+                processed += f"{indent}\n"
+
+                definition = ''
+                term = ''
+
+                state = "row"
+                term = row.group(6)
+                continue
+
+            if cell:
+                # add cell content to definition already in progress
+                # leaving a blank line to start a new paragraph
+                definition += "\n\n" + cell.group(1)
+                continue
+
+            if cell_empty:
+                # add cell content to definition already in progress
+                # leaving a blank line to start a new paragraph
+                definition += "\n\n"
+                continue
+
+            if content:
+                definition += "\n"+content.group(1)
+                continue
+
+            raise ValueError(f"{file_path}: list-table cell processing, unexpected content:" + line)
+
+        else:
+            raise ValueError(f"{file_path}: list-table {state} processing, unexpected content:" + line)
+
+    # final definition
+    if state == "cell":
+        processed += f"{indent}{term}\n"
+        for def_line in definition.splitlines():
+            processed += f"{indent}   {def_line}\n"
+
+    elif state != "blank":
+        raise ValueError(f"{file_path}: list-table unexpected end: {state}")
+
+    return processed
+
+def _block_directive_list_table(file_path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
+    """
+    Called by _preprocess_rst_block_directive to clean up list-table directive.
+
+    Very complicated tables with nested blocks cannot be supported by mkdocs pipe table approach,
+    as fallback plan definition lists are used (and some sample styling is available to present these
+    more like tables.
+    """
+    relative_path = value.strip()
+
+    scan:str = _list_table_scan(block)
+
+    if scan in ['grid-table']:
+        # process into definition list
+        logger.warning(file_path + ": grid-table detected")
+        return _rst_definition_list_from_list_table(file_path, value, arguments, block, indent)
+    else:
+        return _safe_list_table(file_path, value, arguments, block, indent)
+
+def _block_directive_include(file_path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
     """
     Called by _preprocess_rst_block_directive to convert sphinx directive to raw markdown code block.
     """
@@ -1326,7 +1613,7 @@ def _block_directive_include(path: str, value: str, arguments: dict[str, str], b
     # path use, to allow each doc page to be used as part of a mkdocs-monorepo-plugin build
     if relative_path[0:1] == '/':
         relative_path = relative_path[1:]
-        for _ in range(path.count('/') - 1):
+        for _ in range(file_path.count('/') - 1):
             relative_path = '../' + relative_path
     elif relative_path[0:2] != './':
         # include-markdown-plugin requires relative paths to start with ./ or ../
