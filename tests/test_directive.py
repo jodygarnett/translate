@@ -255,6 +255,18 @@ Goodbye"""
                                                                              mkdocs_translate.translate._block_directive_list_table)
         self.assertTrue("* - Format:" not in process)
 
+    def test_list_table_scan(self):
+        block ="""   * - **Info**
+     - **Example**
+     - **Description**
+   * - Operating system
+     - Linux Mint 18
+     - Name of the operating system and the used version
+   * - Uptime
+     - 08:34:50
+     - Up time of the system
+"""
+        self.assertEqual("pipe-table", mkdocs_translate.translate._list_table_scan(block) )
 
 def indentation(text:str) -> list[int]:
     """

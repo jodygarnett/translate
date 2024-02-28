@@ -938,9 +938,9 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
 
     # dynamic - macros
     if '|version|' in text:
-        text = text.replace('|version|', ' {{ version }}')
+        text = text.replace('|version|', '{{ version }}')
     if '|release|' in text:
-        text = text.replace('|release|', ' {{ release }}')
+        text = text.replace('|release|', '{{ release }}')
 
     # external links
     if 'extlinks' in config:
@@ -1294,6 +1294,177 @@ def _block_directive_only(path: str, value: str, arguments: dict[str, str], cont
     return simplified
 
 
+def _list_table_scan2(block: str) -> str:
+    """
+    Process list-table directive into a definition list to avoid pandoc conversion into grid-markdown grid-table.
+    """
+    ROW = re.compile(r'^(\s+)([\*|-])(\s+)([-|*])(\s+)(.*)$')
+    first_line = block.split('\n',1)[0]
+    row = ROW.match(first_line)
+    if row:
+        ROW_LEADING_INDENT = row.group(1)
+        ROW_BULLET = row.group(2)
+        ROW_CELL_INDENT = row.group(3)
+        CELL_BULLET = row.group(4)
+        CELL_CONTENT_INDENT = row.group(5)
+
+        row_indentation = len(ROW_LEADING_INDENT)
+        cell_indentation = len(ROW_LEADING_INDENT + ROW_BULLET + ROW_CELL_INDENT)
+        content_indentation = len(ROW_LEADING_INDENT + ROW_BULLET + ROW_CELL_INDENT + CELL_BULLET + CELL_CONTENT_INDENT)
+        cell_content_indentation = len(CELL_CONTENT_INDENT)
+    else:
+        return "unexpected"
+
+    if CELL_BULLET == "*":
+        CELL_BULLET = r"\*"
+
+    CELL = re.compile( r"^\s{" + str(cell_indentation) + "}" + CELL_BULLET + r"\s{" + str(cell_content_indentation) + r"}(.*)$" )
+    CELL_EMPTY = re.compile(r"^\s{" + str(cell_indentation) + "}" + CELL_BULLET + r"$")
+    CONTENT = re.compile( r"^\s{"+str(content_indentation)+r"}(.*)$")
+
+    # generate raw reStructuredText definition list
+    state = "start"
+    term = ''
+    definition = ''
+
+    for line in block.splitlines():
+        row = ROW.match(line)
+        cell = CELL.match(line)
+        cell_empty = CELL_EMPTY.match(line)
+        content = CONTENT.match(line)
+
+        if len(line.strip()) == 0:
+            intended = 0
+        else:
+            intended = len(line) - len(line.lstrip());
+        blank = intended == 0
+
+        if state == "start":
+            if blank:
+                continue
+            if row:
+                state = "row"
+                term = row.group(6)
+                continue
+            elif cell:
+                raise ValueError(f"{file_path}: list-table start row expected, unexpected cell:" + line)
+            else:
+                raise ValueError(f"{file_path}: list-table start row expected, unexpected content:" + line)
+
+        elif state == "blank":
+            if blank:
+                continue
+
+            elif row:
+                for def_line in definition.splitlines():
+                    processed += f"{indent}   {def_line}\n"
+
+                processed += f"{indent}\n"
+                definition = ''
+                term = ''
+
+                state = "row"
+                term = row.group(6)
+                continue
+
+            elif cell:
+                state = "cell"
+                definition = cell.group(1)
+                continue
+
+            elif cell_empty:
+                state = "cell"
+                definition = ""
+                continue
+
+            elif content:
+                # this is tricky!
+                if definition:
+                    definition += "\n"+content.group(1)
+                    status = "cell"
+                    continue
+
+                elif term:
+                    term += content.group(1)
+                    status = "row"
+
+            raise ValueError(f"{file_path}: list-table, unexpected content:" + line)
+
+        elif state == "row":
+            if row and intended == row_indentation:
+                # two rows is a row no go
+                raise ValueError(f"{file_path}: list-table row processing, unexpected row:" + line)
+
+            if blank:
+                state = "blank"
+                continue
+
+            if cell:
+                state = "cell"
+                definition = cell.group(1)
+                continue
+
+            if cell_empty:
+                state = "cell"
+                definition = ""
+                continue
+
+            if content:
+                term += content.group(1)
+                continue
+
+            raise ValueError(f"{file_path}: list-table row processing, unexpected content:" + line)
+
+        elif state == "cell":
+            if blank:
+                definition += "\n"
+                continue
+
+            if row:
+                processed += f"{indent}{term}\n"
+                for def_line in definition.splitlines():
+                    processed += f"{indent}   {def_line}\n"
+                processed += f"{indent}\n"
+
+                definition = ''
+                term = ''
+
+                state = "row"
+                term = row.group(6)
+                continue
+
+            if cell:
+                # add cell content to definition already in progress
+                # leaving a blank line to start a new paragraph
+                definition += "\n\n" + cell.group(1)
+                continue
+
+            if cell_empty:
+                # add cell content to definition already in progress
+                # leaving a blank line to start a new paragraph
+                definition += "\n\n"
+                continue
+
+            if content:
+                definition += "\n"+content.group(1)
+                continue
+
+            raise ValueError(f"{file_path}: list-table cell processing, unexpected content:" + line)
+
+        else:
+            raise ValueError(f"{file_path}: list-table {state} processing, unexpected content:" + line)
+
+    # final definition
+    if state == "cell":
+        processed += f"{indent}{term}\n"
+        for def_line in definition.splitlines():
+            processed += f"{indent}   {def_line}\n"
+
+    elif state != "blank":
+        raise ValueError(f"{file_path}: list-table unexpected end: {state}")
+
+    return processed
+
 def _list_table_scan(block:str) -> str:
     scan = "empty"
     scan_detected = "unknown"
@@ -1324,7 +1495,7 @@ def _list_table_scan(block:str) -> str:
     else:
         return "inconsistent"
 
-    for line in block:
+    for line in block.splitlines():
         blank = len(line.strip()) == 0
         indented = len(line.lstrip()) - len(line)
 
@@ -1364,8 +1535,6 @@ def _list_table_scan(block:str) -> str:
                 return "inconsistent: start with data item"
             if scan in ["empty","row"]:
                 columns = columns + 1
-                if columns > 2:
-                    return "grid-table"
 
             scan = "data"
             data_indent = indent + 2
