@@ -850,7 +850,7 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
     if '.. toctree::' in text:
         text = _preprocess_rst_toctree(rst_file, text)
 
-    text = _preprocess_rst_block_directive(rst_file, text, 'only', _block_directive_code)
+    text = _preprocess_rst_block_directive(rst_file, text, 'code-block', _block_directive_code)
     text = _preprocess_rst_block_directive(rst_file, text, 'only', _block_directive_only)
     text = _preprocess_rst_block_directive(rst_file, text, 'include', _block_directive_include)
     text = _preprocess_rst_block_directive(rst_file, text, 'literalinclude', _block_directive_literalinclude)
@@ -988,19 +988,6 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
 
     with open(rst_prep, 'w') as rst:
         rst.write(text)
-
-# def _markdown_header(text: str, header: str, value: str) -> str:
-#     """
-#     Add a yaml header to the document text.
-#     """
-#     if text.startswith('---\n', 0, 5):
-#         (header, markdown) = text.split('---\n')
-#         yaml = yaml.safe_load(header)
-#         dct[header] = value
-#
-#         return '---\n' + yaml.dump(header) + '\n' + '---\n' + markdown
-#     else:
-#         return '---\n' + header + ': ' + value + '---\n' + text
 
 def _block_directive_code(file_path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
     """
@@ -1795,7 +1782,7 @@ def _block_directive_list_table(file_path: str, value: str, arguments: dict[str,
 
     if scan.startswith('grid-table'):
         # process into definition list
-        logger.warning(file_path + ": grid-table detected: " + scan)
+        logger.debug(file_path + ": grid-table detected: " + scan)
         return _rst_definition_list_from_list_table(file_path, value, arguments, block, indent)
     else:
         return _safe_list_table(file_path, value, arguments, block, indent)
@@ -2191,6 +2178,7 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
         clean = _postprocess_pandoc_fenced_divs(md_file, clean)
 
     if "+=====" in clean:
+        logger.warning(f"grid-table in pandoc output, postprocess to pipe-table: {md_file}")
         clean = _postprocess_pandoc_grid_table(md_file, clean)
 
     # add header if needed to process mkdocs extra variables
