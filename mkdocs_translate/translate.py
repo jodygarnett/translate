@@ -26,7 +26,7 @@ anchor_file: str = None
 
 anchors: dict = {}
 
-md_extensions_to = 'markdown+definition_lists+fenced_divs+backtick_code_blocks+fenced_code_attributes-simple_tables+pipe_tables'
+md_extensions_to = 'markdown+definition_lists+fenced_divs+backtick_code_blocks+fenced_code_attributes+pipe_tables-simple_tables-multiline_tables'
 md_extensions_from = 'markdown+definition_lists+fenced_divs+backtick_code_blocks+fenced_code_attributes+pipe_tables'
 
 
@@ -832,9 +832,9 @@ def convert_rst(rst_file: str) -> str:
 
     logging.debug("Preprocessing '" + md_tmp_file + "' to '" + md_file + "'")
     postprocess_rst_markdown(md_tmp_file, md_file)
-    shutil.copystat(rst_file, md_file)
     if not os.path.exists(md_file):
         raise FileNotFoundError(errno.ENOENT, f"Did not create postprocessed md file:", md_file)
+    shutil.copystat(rst_file, md_file)
 
     return md_file
 
@@ -850,6 +850,7 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
     if '.. toctree::' in text:
         text = _preprocess_rst_toctree(rst_file, text)
 
+    text = _preprocess_rst_block_directive(rst_file, text, 'only', _block_directive_code)
     text = _preprocess_rst_block_directive(rst_file, text, 'only', _block_directive_only)
     text = _preprocess_rst_block_directive(rst_file, text, 'include', _block_directive_include)
     text = _preprocess_rst_block_directive(rst_file, text, 'literalinclude', _block_directive_literalinclude)
@@ -988,18 +989,38 @@ def preprocess_rst(rst_file: str, rst_prep: str) -> str:
     with open(rst_prep, 'w') as rst:
         rst.write(text)
 
-def _markdown_header(text: str, header: str, value: str) -> str:
-    """
-    Add a yaml header to the document text.
-    """
-    if text.startswith('---\n', 0, 5):
-        (header, markdown) = text.split('---\n')
-        yaml = yaml.safe_load(header)
-        dct[header] = value
+# def _markdown_header(text: str, header: str, value: str) -> str:
+#     """
+#     Add a yaml header to the document text.
+#     """
+#     if text.startswith('---\n', 0, 5):
+#         (header, markdown) = text.split('---\n')
+#         yaml = yaml.safe_load(header)
+#         dct[header] = value
+#
+#         return '---\n' + yaml.dump(header) + '\n' + '---\n' + markdown
+#     else:
+#         return '---\n' + header + ': ' + value + '---\n' + text
 
-        return '---\n' + yaml.dump(header) + '\n' + '---\n' + markdown
-    else:
-        return '---\n' + header + ': ' + value + '---\n' + text
+def _block_directive_code(file_path: str, value: str, arguments: dict[str, str], block: str, indent: str) -> str:
+    """
+    Called by _preprocess_rst_block_directive to clean up code-block directive.
+
+    pandoc cannot handle a few things like `:linenos:` so we are stripping them out.
+    """
+    raw = f'{indent}.. code-block:: {value}\n'
+    for (key, value) in arguments.items():
+        if key in ['linenos',]:
+            continue
+        raw += f"{indent}   {indent}:{key}: {value}\n"
+
+    raw += f"{indent}\n"
+
+    for item in block.splitlines():
+        raw += item + '\n'
+
+    raw += indent + '\n'
+    return raw
 
 def _preprocess_rst_download(path:str, text:str) -> str:
     """
@@ -1153,13 +1174,13 @@ def _preprocess_rst_toctree(path: str, text: str) -> str:
 def _to_relative_path(current_file: str, reference: str) -> str:
     """
     Converts sphinx path reference conventions to a relative path:
-    
+
     * Absolute path: Use of leading / indicates path from the root of the document structure (often conf.py location).
       This is converted to a relative apath from current_file location.
-    
+
     * Relative path: relative path from current_file location
-    
-    return relative path from current file location  
+
+    return relative path from current file location
     """
     relative_path = reference.strip();
 
@@ -1495,14 +1516,21 @@ def _list_table_scan(block:str) -> str:
     else:
         return "inconsistent"
 
+    line_number: int = 0
     for line in block.splitlines():
+        line_number += 1
         blank = len(line.strip()) == 0
         indented = len(line.lstrip()) - len(line)
 
         row = ROW.match(line)
         cell = CELL.match(line)
         if blank:
-            return "grid-table"
+            if line_number == block.count('\n'):
+                # last line is okay to be empty
+                return "pipe-table"
+            else:
+                # any other blank line is seperator between paragraphs
+                return "grid-table, blank in table after: "+block.splitlines()[line_number-2].strip()
 
         if indented == 0:
             if scan == "start":
@@ -1543,11 +1571,11 @@ def _list_table_scan(block:str) -> str:
         else:
             if scan == "row" and indent != row_indent:
                 # row has block directive
-                return "grid-table"
+                return "grid-table due to nested block directive"
 
             if scan == "data" and indent != data_indent:
                 # data has block directive
-                return "grid-table"
+                return "grid-table due to nested block directive"
 
     return "pipe-table"
 
@@ -1765,9 +1793,9 @@ def _block_directive_list_table(file_path: str, value: str, arguments: dict[str,
 
     scan:str = _list_table_scan(block)
 
-    if scan in ['grid-table']:
+    if scan.startswith('grid-table'):
         # process into definition list
-        logger.warning(file_path + ": grid-table detected")
+        logger.warning(file_path + ": grid-table detected: " + scan)
         return _rst_definition_list_from_list_table(file_path, value, arguments, block, indent)
     else:
         return _safe_list_table(file_path, value, arguments, block, indent)
@@ -2162,6 +2190,9 @@ def postprocess_rst_markdown(md_file: str, md_clean: str):
     if ':::' in clean:
         clean = _postprocess_pandoc_fenced_divs(md_file, clean)
 
+    if "+=====" in clean:
+        clean = _postprocess_pandoc_grid_table(md_file, clean)
+
     # add header if needed to process mkdocs extra variables
     MACRO = re.compile(r'\{\{ .* \}\}',flags=re.MULTILINE)
     if MACRO.search(clean):
@@ -2402,6 +2433,33 @@ def _postprocess_pandoc_fenced_divs(md_file: str, text: str) -> str:
 
     return process
 
+def _postprocess_pandoc_grid_table(md_file: str, text: str) -> str:
+    """
+    Markdown does not support grid tables, we do our best to convert complicated tables to definition lists.
+    Any grid tables that remain we are going to try and convert to pipe tables.
+    """
+    process = ''
+
+    GRID_TABLE_DATA = re.compile(r"^(\s*)(\+(-*)\+(\-*\+)*)$")
+    GRID_TABLE_HEAD = re.compile(r"^(\s*)(\+(=*)\+(\=*\+)*)$")
+
+    for line in text.splitlines():
+        table_header = GRID_TABLE_HEAD.match(line)
+
+        if "+=====" in line:
+            if table_header:
+                header = table_header.group(1)+"| "+ table_header.group(2)[2:-2].replace("=+="," | ")+" |"
+                header = header.replace("=","-")
+                process += header + '\n'
+                continue
+
+        table_data = GRID_TABLE_DATA.match(line)
+        if table_data:
+            continue
+
+        process += line + '\n'
+
+    return process
 
 def convert_markdown(md_file: str) -> str:
     """
