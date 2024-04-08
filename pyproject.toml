@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mkdocs-translate"
+version = "0.4.0"
 authors = [
     {name = "Jody Garnett", email = "jody.garnett@gmail.com"},
 ]
@@ -36,5 +37,5 @@ Changelog = "https://github.com/jodygarnett/translate/blob/main/CHANGES"
 [project.scripts]
 mkdocs_translate = "mkdocs_translate.cli:app"
 
-[tool.setuptools.dynamic]
-version = {attr = "mkdocs_translate.__version__"}
+# [tool.setuptools.dynamic]
+# version = {attr = "mkdocs_translate.__version__"}
