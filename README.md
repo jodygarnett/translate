@@ -53,7 +53,7 @@ The user manual is written in sphinx reStructuredText and translated to mkdocs a
    To install from pypi (not yet available):
    
    ```
-   pip install mkdocs_translate
+   pip install -i https://test.pypi.org/simple/ mkdocs-translate==0.4.0
    ```
    
    To install development version use (to preview and provide feedback):
@@ -257,6 +257,26 @@ To build and test locally:
 2. Install locally:
    ```
    pip3 install -e .
+   ```
+
+Distribution:
+
+1. Update version number in ``mkdocs_translate/__init__.py`` version:
+   
+   ```python
+   __version__  = 0.4.0
+   ```
+   
+2. Build wheel:
+   
+   ```bash
+   python3 -m build 
+   ```
+
+3. Upload wheel:
+   
+   ```bash
+   python3 -m twine upload --repository pypi dist/*  
    ```
 
 Debugging:
