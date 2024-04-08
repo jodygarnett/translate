@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mkdocs_translate"
-dynamic = ["version"]
 authors = [
     {name = "Jody Garnett", email = "jody.garnett@gmail.com"},
 ]
@@ -29,8 +28,8 @@ dependencies = [
 dynamic = ["version"]
 
 [project.urls]
-# Homepage = "https://example.com"
-# Documentation = "https://readthedocs.org"
+Homepage = "https://jodygarnett.github.io/translate/"
+Documentation = "https://jodygarnett.github.io/translate/setup/"
 Repository = "https://github.com/jodygarnett/translate.git"
 Changelog = "https://github.com/jodygarnett/translate/blob/main/CHANGES"
 
