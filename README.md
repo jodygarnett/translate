@@ -2,31 +2,15 @@
 
 A translate script is provided to facilitate working with pandoc and deepl translation services.
 
-1. To install development version use:
+The user manual is available: https://jodygarnett.github.io/translate/
 
-   ```
-   pip install git+https://github.com/jodygarnett/translate.git
-   ```
-   
-2. Install script requirements, and check it runs:
+The user manual is written in sphinx reStructuredText and translated to mkdocs as a regression test:
 
-   ```
-   mkdocs_translate --help
-   ```
+* https://github.com/jodygarnett/translate/tree/main/example 
 
-3. The script is runs from the location of your mkdocs project (with `docs` and `mkdocs.yml` files):
+## Quickstart
 
-   ```
-   cd core-genetwork/docs/manual
-   ```
-
-3. The script makes use of existing ``build`` (or ``target``) folder for scratch files:
-
-   ```
-   mkdir build
-   ```
-
-4. This script requires ***pandoc*** be installed:
+1. This script requires ***pandoc*** be installed:
 
    Ubuntu:
    ```bash
@@ -42,7 +26,62 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 
    * https://pandoc.org/installing.html
 
-5. Optional: Create a [translate.yml](translate.yml) filling in the conversion parameters for your project.
+
+2. A writable python environment is required.
+   
+   If you use homebrew (popular on macOS). This installs into user space so it is a witable environment.
+   
+   ```bash
+   brew install python
+   ```
+   
+   You may also use the system python provided by:
+   
+   * Linux distribution
+   * Microsoft App Store
+   * https://www.python.org/ (windows and macOS)
+   
+   The system python is not used directly, it includes `virtualenv` used to setup a writable Python enviornment:
+   
+   ```bash
+   virtualenv venv
+   source venv/bin/activate
+   ```
+
+3. Install mkdocs_translate into your writable Python environment.
+
+   To install from pypi (not yet available):
+   
+   ```
+   pip install mkdocs_translate
+   ```
+   
+   To install development version use (to preview and provide feedback):
+
+   ```
+   pip install git+https://github.com/jodygarnett/translate.git
+   ```
+   
+   
+4. To check it is installed correctly:
+
+   ```
+   mkdocs_translate --help
+   ```
+
+5. The script is intended to run from the location of your mkdocs project (with `docs` and `mkdocs.yml` files):
+
+   ```
+   cd core-genetwork/docs/manual
+   ```
+
+6. The script makes use of existing ``build`` (or ``target``) folder for scratch files:
+
+   ```
+   mkdir build
+   ```
+
+7. Optional: Create a [translate.yml](translate.yml) filling in the conversion parameters for your project.
 
    This file is used to indicate the `build` or `target` directory to use for temporary files.
     

@@ -8,19 +8,7 @@ Installation
 
 A translate script is provided to facilitate working with pandoc and deepl translation services.
 
-1. To install development version use:
-
-   .. code-block:: bash
-
-      pip install git+https://github.com/jodygarnett/translate.git
-
-2. Install script requirements, and check it runs:
-
-   .. code-block:: bash
-
-      mkdocs_translate --help
-
-3. This script requires :command:`pandoc` be installed:
+1. This script requires :command:`pandoc` be installed:
 
    Ubuntu:
 
@@ -37,6 +25,24 @@ A translate script is provided to facilitate working with pandoc and deepl trans
    .. admonition:: Reference
 
       * https://pandoc.org/installing.html
+
+1. To install development version use:
+
+   .. code-block:: bash
+
+      pip install git+https://github.com/jodygarnett/translate.git
+      
+   When published to pypi the script can be installed using:
+   
+   .. code-block:: bash
+   
+      pip install mkdocs_translate
+
+2. To check it is installed correctly:
+
+   .. code-block:: bash
+
+      mkdocs_translate --help
 
 .. _setup:
 

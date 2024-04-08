@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mkdocs_translate"
+dynamic = ["version"]
 authors = [
     {name = "Jody Garnett", email = "jody.garnett@gmail.com"},
 ]
