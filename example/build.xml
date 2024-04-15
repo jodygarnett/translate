@@ -79,7 +79,7 @@
 
   <target name="autobuild" if="autobuild.available">
     <local name="argLine"/>
-    <property name="argLine" value="-D release=${project.release} -D version=${project.version} -q -W -b html -d &quot;${build.directory}/doctrees&quot; &quot;${source.directory}&quot; &quot;${build.directory}/html&quot;"/>
+    <property name="argLine" value="--port 8001 -D release=${project.release} -D version=${project.version} -q -W -b html -d &quot;${build.directory}/doctrees&quot; &quot;${source.directory}&quot; &quot;${build.directory}/html&quot;"/>
     <echo message="Running sphinx-autobuild ${argLine}"/>
     <exec executable="sphinx-autobuild" failonerror="true" dir="${basedir}">
       <env key="project.version" value="${project.version}"/>

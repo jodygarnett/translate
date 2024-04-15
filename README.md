@@ -4,7 +4,7 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 
 The user manual is available: https://jodygarnett.github.io/translate/
 
-The user manual is written in sphinx reStructuredText and translated to mkdocs as a regression test:
+The user manual is written as an example in sphinx reStructuredText and translated to mkdocs as a regression test:
 
 * https://github.com/jodygarnett/translate/tree/main/example 
 
@@ -50,10 +50,10 @@ The user manual is written in sphinx reStructuredText and translated to mkdocs a
 
 3. Install mkdocs_translate into your writable Python environment.
 
-   To install from pypi (not yet available):
+   To install latest release from pypi:
    
    ```
-   pip install -i https://test.pypi.org/simple/ mkdocs-translate==0.4.0
+   pip install mkdocs-translate
    ```
    
    To install development version use (to preview and provide feedback):
@@ -81,7 +81,7 @@ The user manual is written in sphinx reStructuredText and translated to mkdocs a
    mkdir build
    ```
 
-7. Optional: Create a [translate.yml](translate.yml) filling in the conversion parameters for your project.
+7. Optional: Create a [translate.yml](example/translate.yml) filling in the conversion parameters for your project.
 
    This file is used to indicate the `build` or `target` directory to use for temporary files.
     
@@ -129,63 +129,61 @@ A working [example](example) is provided to be adapted for your project:
 
 GeoServer is used as an example here, which is a maven project with a convention of `target` for temporary files.
 
-1. Copy everything over (so all the images and so on are present)
+1. Initial setup of ``docs`` folder structure (so all the images from ``source`` folder are present):
    
     ```
-    cd geoserver/doc/en/user
-    copy -r source doc
+    mkdocs_translate init
     ```
    
-2. Clean sphinx-build `conf.py` and ``rst`` files from `docs/` folder.
-
-    ```
-    find doc -type f -regex ".*\.rst" -delete
-    rm doc/conf.py
-    ```
-
-4.  To scan rst files before conversion:
-
-    * `all`: (default)
-    * `index`: scan anchors and headings into `target/convert/anchors.txt` for `doc` and `ref` directives.
-    * `download`: scan `download` directives for external content, into `docs` folder, producing `download/download.txt` folders.
-    * `toc`: scan `toc` directives, producing nav structure for use with `mkdocs.yml` file
+4.  To scan ``rst`` files before conversion:
     
     ```
     mkdocs_translate scan
     ```
+    
+    The scan collects an index of pages and headings, and looks for any download files that have been managed by sphinx.
+    
+    * `--scan=all`: (default)
+    * `--scan=index`: scan anchors and headings into `target/convert/anchors.txt` for `doc` and `ref` directives.
+    * `--scan=download`: scan `download` directives for external content, into `docs` folder, producing `download/download.txt` folders.    
+    ```
+    mkdocs_translate scan
+    ```
 
-5. To bulk convert all content from ``rst`` to ``md``:
+5. To migrate content from ``rst`` to ``md``:
    
     ```
-    mkdocs_translate rst source/**/*.rst
+    mkdocs_translate migrate
     ```
+    
    
 6. Review this content you may find individual files to fix.
 
     Some formatting is easier to fix in the `rst` files before conversion:
    
     * Indention of nested lists in ``rst`` is often incorrect, resulting in restarted numbering or block quotes.
-  
+
     * Random ``{.title-ref}`` snippets is a general indication to simplify the rst and re-translate.
 
     * Anchors or headings with trailing whitespace throwing off the heading scan, resulting in broken references
 
-6. Convert a single file:
+   To reconvert migrate accepts paths to a file or folder:
    
    ```
-   mkdocs_translate rst source/introduction/license.rst
+   mkdocs_translate migrate source/introduction/license.rst
+   mkdocs_translate migrate source/introduction/**/*.rst
    ```
 
-7. Bulk convert files in a folder:
+7. To generate out navigation tree:
    
+   ```bash
+   mkdocs_translate nav
    ```
-   mkdocs_translate rst source/introduction/**/*.rst
-   ```
-
-8. To generate out navigation tree:
    
+   Supply path information for a file or folder:
    ```
-   mkdocs_translate scan toc
+   mkdocs_translate nav source/index.rst
+   mkdocs_translate nav source/introdction/**/*.rst
    ```
    
    The output is printed to standard out and may be appended to `mkdocs.yml` file.
@@ -194,14 +192,13 @@ GeoServer is used as an example here, which is a maven project with a convention
 
 Some things are not supported by pandoc, which will produce ``WARNING:`` messages:
 
-* substitutions used for inline images
+* Substitutions used for inline images
 
 * Underlines: replace with bold or italic
   
    ```
    WARNING: broken reference 'getting_involved' link:getting_involved-broken.rst
    ```
-   
 
 ## Language Translation
 
@@ -220,13 +217,13 @@ Using ***pandoc*** to convert to `html`, and then using the [Deepl REST API](htt
 
 5. Translate a document to french using pandoc and deepl:
 
-   ```
+   ```bash
    mkdocs_translate french docs/help/index.md
    ```
    
 6. To translate several documents in a folder:
 
-   ```
+   ```bash
    mkdocs_translate french docs/overview/*.md
    ```
    
@@ -264,13 +261,13 @@ Distribution:
 1. Update version number in ``mkdocs_translate/__init__.py`` version:
    
    ```python
-   __version__  = 0.4.0
+   __version__  = 0.4.2
    ```
    
 2. Build wheel:
    
    ```bash
-   python3 -m build 
+   python3 -m build
    ```
 
 3. Upload wheel:

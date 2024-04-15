@@ -14,7 +14,7 @@ substitutions:
   project_copyright: 2024, Open Source Geospatial Foundation
 extlinks:
   github: https://github.com/jodygarnett/translate/blob/main/%s
-  release: https://github.com/jodygarnett/translate/releases/tag/{{ release }}|Release {{ release }}
+  tag: https://github.com/jodygarnett/translate/releases/tag/{{ release }}|Release {{ release }}
   squidfunk: https://squidfunk.github.io/mkdocs-material/%s
 macro_ignore:
   - setup/index.md

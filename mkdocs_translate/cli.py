@@ -89,7 +89,7 @@ def scan(
         scan: Optional[str] = typer.Option(
             "all",
             "--scan",
-            help="RST scan to perform (all, index, toc, download).",
+            help="RST scan to perform (all, index, download).",
         ),
         test_rst_file: Annotated[str, typer.Argument(
             help="Test scan a single file, sending output to standard output",

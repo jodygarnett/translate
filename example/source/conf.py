@@ -9,8 +9,8 @@
 project = 'MkDocs Translate'
 copyright = '2024, Jody Garnett'
 author = 'Jody Garnett'
-version = "0.9"
-release = "0.9.5"
+version = "0.4"
+release = "0.4.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -22,7 +22,6 @@ exclude_patterns = []
 
 extlinks = {
     'github': ('https://github.com/jodygarnett/translate/blob/main/%s', '%s'),
-    'release': ('https://github.com/jodygarnett/translate/releases/tag/%s', 'Release %s'),
     'squidfunk' : ('https://squidfunk.github.io/mkdocs-material/%s','%s')
 }
 

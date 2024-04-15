@@ -26,19 +26,42 @@ A translate script is provided to facilitate working with pandoc and deepl trans
 
       * https://pandoc.org/installing.html
 
-1. To install development version use:
+2. A writable python environment is required.
+   
+   If you use homebrew (popular on macOS). This installs into user space so it is a witable environment.
+   
+   .. code-block:: bash
+   
+      brew install python
+   
+   You may also use the system python provided by:
+   
+   * Linux distribution
+   * Microsoft App Store
+   * https://www.python.org/ (windows and macOS)
+   
+   The system python is not used directly, it includes :command:`virtualenv` used to setup a writable Python enviornment:
+   
+   .. code-block:: bash
+   
+      virtualenv venv
+      source venv/bin/activate
+
+3. Install mkdocs_translate into your writable Python environment.
+
+   To install latest release from pypi:
+   
+   .. code-block:: bash
+   
+      pip install mkdocs-translate
+   
+   To install development version use (to preview and provide feedback):
 
    .. code-block:: bash
-
+   
       pip install git+https://github.com/jodygarnett/translate.git
-      
-   When published to pypi the script can be installed using:
    
-   .. code-block:: bash
-   
-      pip install mkdocs_translate
-
-2. To check it is installed correctly:
+3. To check it is installed correctly:
 
    .. code-block:: bash
 
