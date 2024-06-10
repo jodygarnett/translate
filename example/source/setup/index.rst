@@ -93,7 +93,7 @@ Project setup
 
    .. note:: If converting a :command:`maven` project use of the existing :file:`target/` folder can be configured below.
 
-5. Define :file:`.gitingore` to avoid adding generated artifacts to version control.
+5. Define :file:`.gitignore` to avoid adding generated artifacts to version control.
 
    .. literalinclude:: ../../.gitignore
       :language: text
